@@ -13,8 +13,7 @@ int main() {
 }
 } else {
         printf("Parent sleeping\n");
-5
-sleep(10);
+	sleep(10);
         kill(child, SIGTERM);
         printf("Child has been killed. Waiting for it...\n");
         wait(NULL);
