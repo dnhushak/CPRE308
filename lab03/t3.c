@@ -85,12 +85,22 @@ int main(int argc, char * argv[])
 
 void *producer(void *arg)
 {
-  int producer_done = 0;
 
+  //int cid = *((int *)arg);
+  int producer_done = 0;
+  
   while (!producer_done)
   {
-    /* fill in the code here */
+  	if(supply == 0){
+  	printf("Producer thread produces 10 items\n");
+    supply += 10;
+    pthread_cond_signal(&consumer_cv);
+    }
+    if (!num_cons_remaining){
+    	producer_done = 1;
+    	}
   }
+
   return NULL;
 }
 
@@ -104,10 +114,10 @@ void *consumer(void *arg)
   while (supply == 0)
     pthread_cond_wait(&consumer_cv, &mut);
 
-  printf("consumer thread id %d consumes an item\n", cid);
+  supply--;
+  printf("Consumer thread id %d consumes an item\n", cid);
   fflush(stdin);
 
-  supply--;
   if (supply == 0)
     pthread_cond_broadcast(&producer_cv);
 
