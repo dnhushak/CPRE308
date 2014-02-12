@@ -1,0 +1,370 @@
+\documentclass[11pt]{report}
+
+\author{Darren Hushak}
+\title{CPRE 308 Lab 3 - Lab Section E}
+\date{}
+
+\usepackage{tikz}
+
+\usepackage{color}
+\usepackage{listings}
+\lstset{ %
+language=C++,                % choose the language of the code
+basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+numbers=left,                   % where to put the line-numbers
+numberstyle=\footnotesize,      % the size of the fonts that are used for the line-numbers
+stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
+numbersep=5pt,                  % how far the line-numbers are from the code
+backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings adding particular underscores
+frame=single,           % adds a frame around the code
+tabsize=2,          % sets default tabsize to 2 spaces
+captionpos=b,           % sets the caption-position to bottom
+breaklines=true,        % sets automatic line breaking
+breakatwhitespace=false,    % sets if automatic breaks should only happen at whitespace
+escapeinside={\%*}{*)}          % if you want to add a comment within your code
+}
+
+\begin{document}
+\maketitle
+\section*{Summary}
+In this lab, we experimented with threads and their execution on shared data. We started off by simply creating and executing threads, and learned how they interact with the main calling process, using the pthread\_join() function.
+We continued on by learning the use of mutex to prevent context switches within "critical areas" of threads, which allows shared data to be handled correctly from thread to thread.
+Finally, we utilized conditional variables to allow threads to communicate their state of completion from one to the other.
+\newpage
+\section*{3.1 - Pthreads}
+This section we explored an introduction to pthreads. We were to create the program ex1, including a main function, and two thread functions, each printing out a separate line to stdout.
+\newline
+
+Upon initial execution of the program, only the main function appears to run, as that "Hello, I am the main function" is the only thing that is printed to stdout. Adding sleep statements to the threads does not appear to fix the problem, as the main thread is still exiting before the threads complete, preventing the threads from printing their statements.
+\newline
+
+Adding the pthread\_join() function at the end of main halts the main process until the threads have completed, allowing the threads to print their respective line.
+\newpage
+Here is the source code:
+\begin{lstlisting}
+#include <pthread.h>
+#include <stdio.h>
+void* thread1();
+void* thread2();
+
+int main(){
+	//Create the pthread pointer types
+	pthread_t i1, i2;
+	
+	//Create the threads, each with their specific function pointer
+	pthread_create(&i1, NULL, thread1, NULL);
+	pthread_create(&i2, NULL, thread2, NULL);
+	
+	//Wait until threads have finished
+	pthread_join(i1, NULL);
+	pthread_join(i2, NULL);
+	
+	//Print
+	printf("Hello, I am the main process\n");
+}
+
+void *thread1(){
+	//sleep(5);
+	printf("Hello, I am thread 1\n");
+}
+
+void *thread2(){
+	//sleep(5);
+	printf("Hello, I am thread 2\n");
+}
+\end{lstlisting}
+
+
+Here is the output when executed:
+\begin{verbatim}
+./ex1
+Hello, I am thread 1
+Hello, I am thread 2
+Hello, I am the main process
+\end{verbatim}
+
+\newpage
+\section*{3.2.1 - Thread Synchronization}
+In this section we were given a program t1 that uses two threads to increment and decrement a value. We explored how mutex makes threads operate in a desired order.
+\newline
+At the first compliation and run of t1, the output v is always equal to zero. The increment() and decrement() threads run one after the other, because of the mutex.
+\newline
+Upon removal of the mutex, the output v changes value randomly (in multiples of 10). This occurs due to the context switches mid-thread between increment() and decrement(). Increment or Decrement may be reading the old value of v (one that has not been written by the other thread), doing its work on it, and writing back to v.
+\newpage
+\section*{3.2.2 - Hello World Again}
+In this section we were to further utilize mutexes and conditional variables to add an additional thread to a given "hello world" file.
+\newline
+
+This was a modification of the supplied t2.c code to allow "again" to be added to the end of a "hello world" statement. Here is the list of changes I made:
+
+\begin{itemize}
+\item Added a new function declaration (line 8)
+\item Added the done\_world conditional variable (line 14)
+\item Added tid\_again thread id (line 19)
+\item Initialized the new done\_world conditional variable (line 24)
+\item Created the again thread (line 29)
+\item pthread\_join(tid\_again) added (line 35)
+\item Changed while(done == 0) to while(done != 1), allows for multiple threads to incrementally be "done" (line 57)
+\item Added a space to the end of "world " (line 61)
+\item Added done = 2 to indicate that world is done (line 64)
+\item Added the condional signal to tell the again thread that world is done (line 66)
+\item Wrote the again thread, which waits until done == 2, then prints "again" (lines 72 through 86)
+\end{itemize}
+\newpage
+Here is the source code of the modified t2.c:
+
+\begin{lstlisting}
+#include <stdio.h>
+#include <pthread.h>
+
+void 	hello();    // define two routines called by threads    
+void 	world();         	
+
+ //New function definition
+void 	again();  
+
+/* global variable shared by threads */
+pthread_mutex_t 	mutex;  		// mutex
+
+//Added the done_world conditional variable
+pthread_cond_t 		done_hello, done_world; 	// conditional variable
+int 			done = 0;      	// testing variable
+
+int main (int argc, char *argv[]){
+    pthread_t 	tid_hello, // thread id  
+    		tid_world, tid_again; 
+    		//Added tid_again
+    /*  initialization on mutex and cond variable  */ 
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&done_hello, NULL);
+    pthread_cond_init(&done_world, NULL); 
+    
+    pthread_create(&tid_hello, NULL, (void*)&hello, NULL); //thread creation
+    pthread_create(&tid_world, NULL, (void*)&world, NULL); //thread creation
+    //Added the again thread
+    pthread_create(&tid_again, NULL, (void*)&again, NULL); //thread creation 
+
+    /* main waits for the two threads to finish */
+    pthread_join(tid_hello, NULL);  
+    pthread_join(tid_world, NULL);
+    //Wait for again thread to finish
+    pthread_join(tid_again, NULL);
+
+    printf("\n");
+    return 0;
+}
+
+void hello() {
+    pthread_mutex_lock(&mutex);
+    printf("hello ");
+    fflush(stdout); 	// flush buffer to allow instant print out
+    done = 1;
+    pthread_cond_signal(&done_hello);	// signal world() thread
+    pthread_mutex_unlock(&mutex);	// unlocks mutex to allow world to print
+    return ;
+}
+
+
+void world() {
+    pthread_mutex_lock(&mutex);
+
+    /* world thread waits until done == 1. */
+    //Changed from == 0 to !=1, allows for multiple threads to operate in sequence
+    while(done != 1) 
+	pthread_cond_wait(&done_hello, &mutex);
+	
+	//Added a space
+    printf("world ");
+    fflush(stdout);
+    //Indicates that world is done, and again can begin
+    done = 2;
+    
+    pthread_cond_signal(&done_world);	// signal again() thread
+    pthread_mutex_unlock(&mutex); // unlocks mutex
+
+    return ;
+}
+
+//The "again" thread
+void again() {
+    pthread_mutex_lock(&mutex);
+
+    /* world thread waits until done == 2. */
+    //
+    while(done != 2) 
+	pthread_cond_wait(&done_world, &mutex);
+
+    printf("again");
+    fflush(stdout);
+    pthread_mutex_unlock(&mutex); // unlocks mutex
+
+    return ;
+}
+\end{lstlisting}
+
+\section*{3.3 - Producer/Consumer}
+
+In this section we were to alter a skeleton program to have a producer class produce 10 items each time the supply reaches zero. A macro-defined number of consumer threads will each consume one item and exit. When all consumer threads have completed, the producer thread will also exit.
+
+I didn't add or edit much, just made some changes to the producer thread:
+\begin{itemize}
+\item Added a conditional to only add to the supply if supply has reached 0 (line 95)
+\item Add 10 to the supply (line 96)
+\item Signal the consumer that the supply is replenished (line 97)
+\item Check if any consumers are remaining, if not, then set producer\_done to 1, allowing producer to exit (lines 99 through 101)
+\end{itemize}
+
+
+Here is the source code of t3:
+
+\begin{lstlisting}
+/*
+ * Fill in the "producer" function to satisfy the requirements 
+ * set forth in the lab description.
+ */
+
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+/* 
+ * the total number of consumer threads created.
+ * each consumer thread consumes one item
+ */
+#define TOTAL_CONSUMER_THREADS 100
+
+/* This is the number of items produced by the producer each time. */
+#define NUM_ITEMS_PER_PRODUCE  10
+
+/*
+ * the two functions for the producer and 
+ * the consumer, respectively
+ */
+void *producer(void *);    
+void *consumer(void *);
+
+
+/********** global variables begin *******/
+
+pthread_mutex_t  mut;
+pthread_cond_t 	 producer_cv; 	
+pthread_cond_t	 consumer_cv;
+int              supply = 0;  /* inventory remaining */
+
+/* 
+ * Number of consumer threads that are yet to consume items.  Remember
+ * that each consumer thread consumes only one item, so initially, this 
+ * is set to TOTAL_CONSUMER_THREADS
+ */
+int  num_cons_remaining = TOTAL_CONSUMER_THREADS;   
+
+/************** global variables end ****************************/
+
+
+
+int main(int argc, char * argv[])
+{
+  pthread_t prod_tid;
+  pthread_t cons_tid[TOTAL_CONSUMER_THREADS];
+  int       thread_index[TOTAL_CONSUMER_THREADS];
+  int       i;
+
+  /********** initialize mutex and condition variables ***********/
+  pthread_mutex_init(&mut, NULL);
+  pthread_cond_init(&producer_cv, NULL);
+  pthread_cond_init(&consumer_cv, NULL);
+  /***************************************************************/
+
+
+  /* create producer thread */
+  pthread_create(&prod_tid, NULL, producer, NULL);
+
+  /* create consumer thread */
+  for (i = 0; i < TOTAL_CONSUMER_THREADS; i++)
+  {
+    thread_index[i] = i;
+    pthread_create(&cons_tid[i], NULL, 
+		   consumer, (void *)&thread_index[i]);
+  }
+
+  /* join all threads */
+  pthread_join(prod_tid, NULL);
+  for (i = 0; i < TOTAL_CONSUMER_THREADS; i++)
+    pthread_join(cons_tid[i], NULL);
+
+  printf("All threads complete\n");
+
+  return 0;
+}
+
+
+
+
+/***************** Consumers and Producers ******************/
+
+void *producer(void *arg)
+{
+
+  //int cid = *((int *)arg);
+  int producer_done = 0;
+  
+  while (!producer_done)
+  {
+  	if(supply == 0){
+  	printf("Producer thread produces 10 items\n");
+    supply += 10;
+    pthread_cond_signal(&consumer_cv);
+    }
+    if (!num_cons_remaining){
+    	producer_done = 1;
+    	}
+  }
+
+  return NULL;
+}
+
+
+
+void *consumer(void *arg)
+{
+  int cid = *((int *)arg);
+
+  pthread_mutex_lock(&mut);
+  while (supply == 0)
+    pthread_cond_wait(&consumer_cv, &mut);
+
+  supply--;
+  printf("Consumer thread id %d consumes an item\n", cid);
+  fflush(stdin);
+
+  if (supply == 0)
+    pthread_cond_broadcast(&producer_cv);
+
+  num_cons_remaining--;
+
+  pthread_mutex_unlock(&mut);
+
+  return NULL;
+}
+\end{lstlisting}
+
+Here are the last few lines of output from t3:
+
+
+\begin{verbatim}
+Consumer thread id 93 consumes an item
+Consumer thread id 94 consumes an item
+Consumer thread id 95 consumes an item
+Consumer thread id 96 consumes an item
+Consumer thread id 97 consumes an item
+Consumer thread id 98 consumes an item
+Producer thread produces 10 items
+Consumer thread id 99 consumes an item
+All threads complete
+\end{verbatim}
+
+\end{document}
