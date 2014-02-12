@@ -51,7 +51,7 @@ void increment()
   int a;
   for( i = 0; i < 99; i++) 
   {	
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     
     /* critical section */
     a = v + 10;
@@ -71,7 +71,7 @@ void decrement()
   
   for(i = 0; i < 99; i++)
   {	
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     
     /* critical section */
     a = v - 10;

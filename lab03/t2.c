@@ -9,24 +9,35 @@
 void 	hello();    // define two routines called by threads    
 void 	world();         	
 
+ //New function definition
+void 	again();  
+
 /* global variable shared by threads */
 pthread_mutex_t 	mutex;  		// mutex
-pthread_cond_t 		done_hello; 	// conditional variable
+
+//Added the done_world conditional variable
+pthread_cond_t 		done_hello, done_world; 	// conditional variable
 int 			done = 0;      	// testing variable
 
 int main (int argc, char *argv[]){
     pthread_t 	tid_hello, // thread id  
-    		tid_world; 
+    		tid_world, tid_again; 
+    		//Added tid_again
     /*  initialization on mutex and cond variable  */ 
     pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init(&done_hello, NULL); 
+    pthread_cond_init(&done_hello, NULL);
+    pthread_cond_init(&done_world, NULL); 
     
     pthread_create(&tid_hello, NULL, (void*)&hello, NULL); //thread creation
-    pthread_create(&tid_world, NULL, (void*)&world, NULL); //thread creation 
+    pthread_create(&tid_world, NULL, (void*)&world, NULL); //thread creation
+    //Added the again thread
+    pthread_create(&tid_again, NULL, (void*)&again, NULL); //thread creation 
 
     /* main waits for the two threads to finish */
     pthread_join(tid_hello, NULL);  
     pthread_join(tid_world, NULL);
+    //Wait for again thread to finish
+    pthread_join(tid_again, NULL);
 
     printf("\n");
     return 0;
@@ -47,10 +58,32 @@ void world() {
     pthread_mutex_lock(&mutex);
 
     /* world thread waits until done == 1. */
-    while(done == 0) 
+    //Changed from == 0 to !=1, allows for multiple threads to operate in sequence
+    while(done != 1) 
 	pthread_cond_wait(&done_hello, &mutex);
+	
+	//Added a space
+    printf("world ");
+    fflush(stdout);
+    //Indicates that world is done, and again can begin
+    done = 2;
+    
+    pthread_cond_signal(&done_world);	// signal again() thread
+    pthread_mutex_unlock(&mutex); // unlocks mutex
 
-    printf("world");
+    return ;
+}
+
+//The "again" thread
+void again() {
+    pthread_mutex_lock(&mutex);
+
+    /* world thread waits until done == 2. */
+    //
+    while(done != 2) 
+	pthread_cond_wait(&done_world, &mutex);
+
+    printf("again");
     fflush(stdout);
     pthread_mutex_unlock(&mutex); // unlocks mutex
 
