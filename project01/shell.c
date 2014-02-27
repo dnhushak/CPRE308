@@ -30,6 +30,26 @@ int splitArgs(char *line, char **argv) {
 		}
 	}
 	*argv = '\0';
+
+	//Reset arg pointer to be back to the original passed in value
+	argv = argv - count;
+	for (int i = 0; i < count; i++) {
+		//Check if first character is a $, indicating environment variable
+		if (!strncmp(argv[i], "$", 1)) {
+			//Get rid of the $ out front by moving the pointer up by 1
+			argv[i] = argv[i] + 1;
+
+			//Copy the contents of the environment variable
+			if (getenv(argv[i])) {
+				argv[i] = getenv(argv[i]);
+				printf("%s\n", argv[i]);
+			} else {
+				printf("Environment variable %s is not set\n", argv[i]);
+				return -1;
+			}
+		}
+	}
+
 	return count;
 }
 
@@ -90,6 +110,11 @@ int main(int argc, char *argv[]) {
 		int numArgs;
 		numArgs = splitArgs(input, inputArgs);
 
+		if (numArgs <0){
+			printf("Invalid Argument(s)\n");
+			continue;
+		}
+
 		//Check for ampersand
 		if (!(strcmp(inputArgs[numArgs - 1], "&"))) {
 			nowait = 1;
@@ -105,8 +130,16 @@ int main(int argc, char *argv[]) {
 		} else if (!(strcmp(inputArgs[0], "ppid"))) {
 			printf("Parent Process id is: [%d]\n", getppid());
 		} else if (!(strcmp(inputArgs[0], "get"))) {
-			printf("Environment variable %s has value: %s", inputArgs[1],
-					getenv(inputArgs[1]));
+			if(getenv(inputArgs[1])){
+			printf("Environment variable %s has value: %s\n", inputArgs[1],
+					getenv(inputArgs[1]));}
+			else{
+				printf("Environment variable %s is not set\n", inputArgs[1]);
+			}
+		} else if (!(strcmp(inputArgs[0], "set"))) {
+			printf("Environment variable %s has been set with value: %s\n",
+					inputArgs[1], inputArgs[2]);
+			setenv(inputArgs[1], inputArgs[2], 1);
 		} else {
 			execute(inputArgs, nowait);
 		}
