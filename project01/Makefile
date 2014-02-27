@@ -1,5 +1,5 @@
 CC = gcc
-ARG = -lpthread
+ARG = -lpthread -g
 
 all: shell
 
