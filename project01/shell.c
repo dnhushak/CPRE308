@@ -2,81 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include  <sys/types.h>
-
-int splitArgs(char *line, char **argv) {
-	//Argument counter
-	int count = 0;
-
-	//The first argument points to the first character of the line
-	*argv++ = line;
-	count++;
-
-	//Wait until the end of the line
-	while (*line != '\0') {
-
-		//Find spaces, tabs, or new lines, replace with null character
-		if (*line == ' ' || *line == '\t' || *line == '\n') {
-			*line++ = '\0';
-
-			//If the current line pointer is not a null character, we have a new arg
-			if (*line != '\0') {
-				//Increment the argv pointer, and point it at the beginning of the next line
-				*argv++ = line;
-				count++;
-			}
-		} else {
-			line++; /* skip the argument until ...    */
-		}
-	}
-	*argv = '\0';
-
-	//Reset arg pointer to be back to the original passed in value
-	argv = argv - count;
-	for (int i = 0; i < count; i++) {
-		//Check if first character is a $, indicating environment variable
-		if (!strncmp(argv[i], "$", 1)) {
-			//Get rid of the $ out front by moving the pointer up by 1
-			argv[i] = argv[i] + 1;
-
-			//Copy the contents of the environment variable
-			if (getenv(argv[i])) {
-				argv[i] = getenv(argv[i]);
-				printf("%s\n", argv[i]);
-			} else {
-				printf("Environment variable %s is not set\n", argv[i]);
-				return -1;
-			}
-		}
-	}
-
-	return count;
-}
-
-void execute(char **argv, int nowait) {
-
-	pid_t pid;
-	int status;
-
-	if ((pid = fork()) < 0) { /* fork a child process           */
-		printf("ERROR: Forking failed\n");
-		exit(1);
-	} else if (pid == 0) { /* for the child process:         */
-		printf("Process %s executing with process ID: %d\n", argv[0], getpid());
-		if (execvp(*argv, argv) < 0) { /* execute the command  */
-			printf("ERROR: Executable not found\n");
-			exit(1);
-		}
-	} else {
-		if (!nowait) {
-			while (wait(&status) != pid)
-				;
-		} else {
-
-			printf("Process executing in background\n");
-		}
-	}
-}
+#include "splitArgs.h"
+#include "execCommand.h"
+#include <sys/types.h>
 
 int main(int argc, char *argv[]) {
 
@@ -90,14 +18,18 @@ int main(int argc, char *argv[]) {
 	extern char *optarg;
 	extern int optind, opterr;
 	int ch;
+	//Get all optional arguments using the getopt function
 	while ((ch = getopt(argc, argv, "p:")) != EOF) {
 		switch (ch) {
+		//Prompt argument
 		case 'p':
 			strcpy(prompt, optarg);
 			break;
 		}
 
 	}
+
+	//Main loop
 	while (1) {
 		memset(&input, '\0', sizeof(input));
 		//Display the shell prompt
@@ -110,8 +42,14 @@ int main(int argc, char *argv[]) {
 		int numArgs;
 		numArgs = splitArgs(input, inputArgs);
 
-		if (numArgs <0){
+		//Check if a valid number of arguments have been set
+		if (numArgs < 0) {
 			printf("Invalid Argument(s)\n");
+			continue;
+		}
+
+		//Prevent execute from attempting to execute nothing (Simply pressing enter)
+		if (numArgs == 1 && !strcmp(inputArgs[0], "\0")) {
 			continue;
 		}
 
@@ -123,24 +61,48 @@ int main(int argc, char *argv[]) {
 		}
 
 		//All of the checks for user input
+		//exit - exit normally
 		if (!(strcmp(inputArgs[0], "exit"))) {
-			return 0;
-		} else if (!(strcmp(inputArgs[0], "pid"))) {
+			exit(2);
+		}
+		//pid - print the process ID
+		else if (!(strcmp(inputArgs[0], "pid"))) {
 			printf("Process id is: [%d]\n", getpid());
-		} else if (!(strcmp(inputArgs[0], "ppid"))) {
+		}
+		//ppid - print the parent's process ID
+		else if (!(strcmp(inputArgs[0], "ppid"))) {
 			printf("Parent Process id is: [%d]\n", getppid());
-		} else if (!(strcmp(inputArgs[0], "get"))) {
-			if(getenv(inputArgs[1])){
-			printf("Environment variable %s has value: %s\n", inputArgs[1],
-					getenv(inputArgs[1]));}
-			else{
+		}
+		//pwd - print the parent's process ID
+		else if (!(strcmp(inputArgs[0], "pwd"))) {
+			char * buf;
+			printf("Present Wording Directory is: %s\n", getwd(buf));
+		}
+		//cd - change current directory
+		else if (!(strcmp(inputArgs[0], "cd"))) {
+			chdir(inputArgs[1]);
+			char * buf;
+			printf("Present Wording Directory is: %s\n", getwd(buf));
+		}
+		//get - get an environment variable
+		else if (!(strcmp(inputArgs[0], "get"))) {
+
+			//Check if variable is set
+			if (getenv(inputArgs[1])) {
+				//If it is set, print it.
+				printf("Environment variable %s has value: %s\n", inputArgs[1],
+						getenv(inputArgs[1]));
+			} else {
+				//If not set, notify user
 				printf("Environment variable %s is not set\n", inputArgs[1]);
 			}
 		} else if (!(strcmp(inputArgs[0], "set"))) {
+			//Set environment variable and notify user what has been set to what
+			setenv(inputArgs[1], inputArgs[2], 1);
 			printf("Environment variable %s has been set with value: %s\n",
 					inputArgs[1], inputArgs[2]);
-			setenv(inputArgs[1], inputArgs[2], 1);
 		} else {
+			//If none of the built in functions, search the PATH for an executable
 			execute(inputArgs, nowait);
 		}
 
