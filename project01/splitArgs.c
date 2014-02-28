@@ -86,7 +86,8 @@ int splitArgs(char *line, char **argv) {
 
 	//Reset arg pointer to be back to the original passed in value
 	argv = argv - count;
-	for (int i = 0; i < count; i++) {
+	int i;
+	for (i = 0; i < count; i++) {
 		//Check if first character is a $, indicating environment variable
 		if (!strncmp(argv[i], "$", 1)) {
 			//Get rid of the $ out front by moving the pointer up by 1
