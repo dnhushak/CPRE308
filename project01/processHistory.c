@@ -36,7 +36,8 @@ Process * removeFromList(ProcessList * procList, pid_t pid) {
 
 	//Start at head of list
 	dummy = procList->head;
-	for (int i = 0; i < procList->size; i++) {
+	int i;
+	for (i = 0; i < procList->size; i++) {
 		if (dummy->pid == pid) {
 			//We found it!
 			//First, fix the list
@@ -61,9 +62,8 @@ Process * removeFromList(ProcessList * procList, pid_t pid) {
 			}
 			procList->size--;
 			return dummy;
-		}
-		else{
-			dummy= dummy->next;
+		} else {
+			dummy = dummy->next;
 		}
 	}
 	//Couldn't find it
@@ -77,7 +77,8 @@ void printProcesses(ProcessList * procList) {
 		printf("%d processes are currently running:\n", procList->size);
 
 		Process * dummy = procList->head;
-		for (int i = 0; i < procList->size; i++) {
+		int i;
+		for (i = 0; i < procList->size; i++) {
 			printf("[%d] %s is currently running\n", dummy->pid,
 					dummy->procname);
 			dummy = dummy->next;

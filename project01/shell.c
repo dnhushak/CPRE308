@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 	char input[300];
 	char *inputArgs[30];
 	int nowait;
-	char * buf = (char*) malloc(sizeof(char));
+	char buf[600];
 	ProcessList * pList = (ProcessList*) malloc(sizeof(ProcessList));
 	pList->size = 0;
 
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 		}
 		//pwd - print the parent's process ID
 		else if (!(strcmp(inputArgs[0], "pwd"))) {
-			printf("Present Wording Directory is: %s\n", getwd(buf));
+			printf("Present Wording Directory is: %s\n", getcwd(buf, sizeof(buf)));
 		}
 		//cd - change current directory
 		else if (!(strcmp(inputArgs[0], "cd"))) {
