@@ -21,7 +21,6 @@ int main(int argc, char *argv[]) {
 
 	//Scans for argument inputs
 	extern char *optarg;
-	extern int optind, opterr;
 	int ch;
 	//Get all optional arguments using the getopt function
 	while ((ch = getopt(argc, argv, "p:")) != EOF) {
