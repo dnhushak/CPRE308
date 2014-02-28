@@ -2,8 +2,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
 
-void execute(char **argv, int nowait) {
+void printstatus(int status, int pid, char* arg) {
+	if (WIFEXITED(status)) {
+		printf("[%d] %s Exit %d\n", pid, arg, WEXITSTATUS(status));
+	}
+	if (WIFSIGNALED(status)) {
+		printf("[%d] %s Killed (%d)\n", pid, arg, WTERMSIG(status));
+	}
+}
+
+pid_t execute(char **argv, int nowait) {
 	//Pid
 	pid_t pid;
 	int status;
@@ -22,17 +33,7 @@ void execute(char **argv, int nowait) {
 			printf("ERROR: Executable not found\n");
 			exit(1);
 		}
-	} else {
-		//TODO Print the exit status
-		//Is the parent process
-		if (!nowait) {
-			//If nowait flag is not set, wait until child process completes
-			while (wait(&status) != pid)
-				;
-		} else {
-			//TODO Improve the Ampersand wait function
-			//Or, if nowait, then process in the background
-			printf("Process executing in background\n");
-		}
 	}
+	return pid;
+
 }

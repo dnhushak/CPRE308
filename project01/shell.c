@@ -5,6 +5,7 @@
 #include "splitArgs.h"
 #include "execCommand.h"
 #include <sys/types.h>
+#include "processHistory.h"
 
 int main(int argc, char *argv[]) {
 
@@ -13,6 +14,8 @@ int main(int argc, char *argv[]) {
 	char input[300];
 	char *inputArgs[30];
 	int nowait;
+	ProcessList pList;
+	pList.size = 0;
 
 	//Scans for argument inputs
 	extern char *optarg;
@@ -31,6 +34,8 @@ int main(int argc, char *argv[]) {
 
 	//Main loop
 	while (1) {
+		int status;
+
 		memset(&input, '\0', sizeof(input));
 		//Display the shell prompt
 		printf("%s ", prompt);
@@ -55,7 +60,10 @@ int main(int argc, char *argv[]) {
 
 		//Check for ampersand
 		if (!(strcmp(inputArgs[numArgs - 1], "&"))) {
+			//Set the nowait flag
 			nowait = 1;
+			//Remove the ampersand from the list of arguments sent to execute
+			inputArgs[numArgs - 1] = '\0';
 		} else {
 			nowait = 0;
 		}
@@ -101,9 +109,25 @@ int main(int argc, char *argv[]) {
 			setenv(inputArgs[1], inputArgs[2], 1);
 			printf("Environment variable %s has been set with value: %s\n",
 					inputArgs[1], inputArgs[2]);
+		} else if (!(strcmp(inputArgs[0], "jobs"))) {
+			//Set environment variable and notify user what has been set to what
+			pList.printProcesses();
 		} else {
 			//If none of the built in functions, search the PATH for an executable
-			execute(inputArgs, nowait);
+			pid_t pid = execute(inputArgs, nowait);
+
+			if (!nowait) {
+				//If nowait flag is not set, wait until child process completes
+				waitpid(pid, &status, 0);
+				printstatus(status, pid, inputArgs[0]);
+			} else {
+
+				//Put the process in the processList table.
+				//addToTable(&processList, pid, inputArgs[0]);
+				//TODO Improve the Ampersand wait function
+				//Or, if nowait, then process in the background
+				printf("Process executing in background\n");
+			}
 		}
 
 	}

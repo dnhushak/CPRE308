@@ -6,9 +6,9 @@ SRCPATH = ./
 
 #File information
 EXE = shell
-HEADERS = $(SRCPATH)splitArgs.h $(SRCPATH)execCommand.h
-SRCS = $(SRCPATH)shell.c $(SRCPATH)splitArgs.c $(SRCPATH)execCommand.c
-OBJECTS = splitArgs.o shell.o execCommand.o
+HEADERS = $(SRCPATH)splitArgs.h $(SRCPATH)execCommand.h $(SRCPATH)processHistory.h
+SRCS = $(SRCPATH)shell.c $(SRCPATH)splitArgs.c $(SRCPATH)execCommand.c $(SRCPATH)processHistory.c
+OBJECTS = splitArgs.o shell.o execCommand.o processHistory.o
 
 #Library flags
 LDFLAGS = -g
@@ -26,6 +26,9 @@ splitArgs.o: $(SRC)splitArgs.c $(HEADERS)
 
 execCommand.o: $(SRC)execCommand.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $(SRC)execCommand.c $(LDFLAGS)
+	
+processHistory.o: $(SRC)processHistory.c $(HEADERS)
+	$(CC) $(CFLAGS) -c $(SRC)processHistory.c $(LDFLAGS)
 
 clean:
 	rm -rf $(EXE) *.o
