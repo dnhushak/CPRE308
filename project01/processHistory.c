@@ -1,25 +1,25 @@
 #include "processHistory.h"
 
-void addToList(ProcessList * procList, pid_t pid, char* pname) {
-	Process newProc;
-	newProc.pid = pid;
-	newProc.procname = pname;
-	newProc.next = NULL;
+void addToList(ProcessList * procList, Process * proc) {
+	Process * newProc = (Process*) malloc(sizeof(Process));
+	newProc = proc;
+	newProc->next = NULL;
 
 	if (procList->size == 0) {
 		//Empty list
-		newProc.prev = NULL;
+		newProc->prev = NULL;
 		//Have the head point to the new process
-		procList->head = &newProc;
+		procList->head = newProc;
 		//Foot also points to the new process
-		procList->foot = &newProc;
+		procList->foot = procList->head;
 		//Increment the size
 		procList->size++;
 	} else {
 		//Place at the end of the list
-		newProc.prev = procList->foot;
+		newProc->prev = procList->foot;
+		newProc->prev->next = newProc;
 		//Make the foot point to the new end of the list
-		procList->foot = &newProc;
+		procList->foot = newProc;
 		//Increment the size
 		procList->size++;
 	}
@@ -46,18 +46,18 @@ Process * removeFromList(ProcessList * procList, pid_t pid) {
 	return dummy;
 }
 
-void printProcesses() {
-	/*if (procList->size == 0) {
+void printProcesses(ProcessList * procList) {
+	if (procList->size == 0) {
 		printf("No jobs running in background\n");
 	} else {
-		printf("Processes currently running:\n");
+		printf("%d processes are currently running:\n", procList->size);
 
 		Process * dummy = procList->head;
 		for (int i = 0; i < procList->size; i++) {
-			printf("[%d] %s", dummy->pid, dummy->procname);
+			printf("[%d] %s is currently running\n", dummy->pid,
+					dummy->procname);
 			dummy = dummy->next;
 		}
-	}*/
-	printf("Process List\n");
+	}
 }
 

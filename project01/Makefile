@@ -11,7 +11,7 @@ SRCS = $(SRCPATH)shell.c $(SRCPATH)splitArgs.c $(SRCPATH)execCommand.c $(SRCPATH
 OBJECTS = splitArgs.o shell.o execCommand.o processHistory.o
 
 #Library flags
-LDFLAGS = -g
+LDFLAGS = -g -Wall
 #C compiler flags
 CFLAGS = 
 

@@ -1,9 +1,4 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <sys/wait.h>
+#include "execCommand.h"
 
 void printstatus(int status, int pid, char* arg) {
 	if (WIFEXITED(status)) {
@@ -14,10 +9,9 @@ void printstatus(int status, int pid, char* arg) {
 	}
 }
 
-pid_t execute(char **argv, int nowait) {
+void execute(char **argv, Process * executed) {
 	//Pid
 	pid_t pid;
-	int status;
 	// Fork program, check for forking return value
 	if ((pid = fork()) < 0) {
 		printf("ERROR: Forking failed\n");
@@ -33,7 +27,10 @@ pid_t execute(char **argv, int nowait) {
 			printf("ERROR: Executable not found\n");
 			exit(1);
 		}
+	} else {
+		executed->procname = malloc(strlen(argv[0]));
+		memcpy((executed->procname), argv[0], strlen(argv[0]));
+		executed->pid = pid;
 	}
-	return pid;
 
 }

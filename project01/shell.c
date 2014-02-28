@@ -14,8 +14,9 @@ int main(int argc, char *argv[]) {
 	char input[300];
 	char *inputArgs[30];
 	int nowait;
-	ProcessList pList;
-	pList.size = 0;
+	char * buf = (char*) malloc(sizeof(char));
+	ProcessList * pList = (ProcessList*) malloc(sizeof(ProcessList));
+	pList->size = 0;
 
 	//Scans for argument inputs
 	extern char *optarg;
@@ -83,13 +84,11 @@ int main(int argc, char *argv[]) {
 		}
 		//pwd - print the parent's process ID
 		else if (!(strcmp(inputArgs[0], "pwd"))) {
-			char * buf;
 			printf("Present Wording Directory is: %s\n", getwd(buf));
 		}
 		//cd - change current directory
 		else if (!(strcmp(inputArgs[0], "cd"))) {
 			chdir(inputArgs[1]);
-			char * buf;
 			printf("Present Wording Directory is: %s\n", getwd(buf));
 		}
 		//get - get an environment variable
@@ -110,23 +109,21 @@ int main(int argc, char *argv[]) {
 			printf("Environment variable %s has been set with value: %s\n",
 					inputArgs[1], inputArgs[2]);
 		} else if (!(strcmp(inputArgs[0], "jobs"))) {
-			//Set environment variable and notify user what has been set to what
-			pList.printProcesses();
+			printProcesses(pList);
 		} else {
 			//If none of the built in functions, search the PATH for an executable
-			pid_t pid = execute(inputArgs, nowait);
-
+			Process * executed = (Process *) malloc (sizeof(Process));
+			execute(inputArgs, executed);
 			if (!nowait) {
 				//If nowait flag is not set, wait until child process completes
-				waitpid(pid, &status, 0);
-				printstatus(status, pid, inputArgs[0]);
+				waitpid(executed->pid, &status, 0);
+				printstatus(status, executed->pid, executed->procname);
 			} else {
-
 				//Put the process in the processList table.
-				//addToTable(&processList, pid, inputArgs[0]);
-				//TODO Improve the Ampersand wait function
+				addToList(pList, executed);
 				//Or, if nowait, then process in the background
-				printf("Process executing in background\n");
+				printf("Process %s executing in background\n",
+						executed->procname);
 			}
 		}
 
