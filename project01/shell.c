@@ -132,21 +132,36 @@ int main(int argc, char *argv[]) {
 		}
 		//get - get an environment variable
 		else if (!(strcmp(inputArgs[0], "get"))) {
-
-			//Check if variable is set
-			if (getenv(inputArgs[1])) {
-				//If it is set, print it.
-				printf("Environment variable %s has value: %s\n", inputArgs[1],
-						getenv(inputArgs[1]));
+			if (numArgs > 1) {
+				//Check if variable is set
+				if (getenv(inputArgs[1])) {
+					//If it is set, print it.
+					printf("Environment variable %s has value: %s\n",
+							inputArgs[1], getenv(inputArgs[1]));
+				} else {
+					//If not set, notify user
+					printf("Environment variable %s is not set\n",
+							inputArgs[1]);
+				}
 			} else {
-				//If not set, notify user
-				printf("Environment variable %s is not set\n", inputArgs[1]);
+				printf("No environment varialbe given\n");
 			}
 		} else if (!(strcmp(inputArgs[0], "set"))) {
-			//Set environment variable and notify user what has been set to what
-			setenv(inputArgs[1], inputArgs[2], 1);
-			printf("Environment variable %s has been set with value: %s\n",
-					inputArgs[1], inputArgs[2]);
+			if (numArgs > 2) {
+				//Set environment variable and notify user what has been set to what
+				if (!setenv(inputArgs[1], inputArgs[2], 1)) {
+					printf(
+							"Environment variable %s has been set with value: %s\n",
+							inputArgs[1], inputArgs[2]);
+				}
+			} else if (numArgs == 2) {
+				if (!unsetenv(inputArgs[1])) {
+					printf("Environment variable %s has been unset\n",
+							inputArgs[1]);
+				}
+			} else {
+				printf("No environment varialbe given\n");
+			}
 		} else if (!(strcmp(inputArgs[0], "jobs"))) {
 			printProcesses(pList);
 		} else {

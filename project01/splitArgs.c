@@ -38,7 +38,7 @@ int splitArgs(char *line, char **argv) {
 				count++;
 			}
 		}
-		//Check for double quoted args
+		//Check for quoted args
 		else if (*line == '"' || *line == '\'') {
 			//Keep track of double or single quote
 			char quote = *line;

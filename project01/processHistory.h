@@ -4,9 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef NULL
-#define NULL   ((void *) 0)
-#endif
 
 typedef struct Process {
 	char * procname;
