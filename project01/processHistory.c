@@ -28,22 +28,46 @@ void addToList(ProcessList * procList, Process * proc) {
 Process * removeFromList(ProcessList * procList, pid_t pid) {
 	Process * dummy = procList->head;
 	//Find the process with the pid
-	while (dummy->pid != pid) {
-		if (dummy->next == NULL) {
-			//Not found, return -1
-			return NULL;
-		} else {
-			//Advance down the list
-			dummy = dummy->next;
+	//Iterate through the list to find it
+	if (procList->size == 0) {
+		//empty list, return null
+		return NULL;
+	}
+
+	//Start at head of list
+	dummy = procList->head;
+	for (int i = 0; i < procList->size; i++) {
+		if (dummy->pid == pid) {
+			//We found it!
+			//First, fix the list
+			if (i == 0) {
+				//Beginning of the list, point head to next node
+				procList->head = dummy->next;
+			}
+			if (i == procList->size) {
+				//End of list, point foot to previous node
+				//Note that we could be at beginning and end
+				//simultaneously, hence the lack of "else"
+				procList->foot = dummy->prev;
+			}
+			//If there is a previous node, set it's next to the dummy's next
+			if (dummy->next != NULL) {
+				dummy->next->prev = dummy->prev;
+			}
+
+			//If there is a next node, set it's prev to the dummy's prev
+			if (dummy->prev != NULL) {
+				dummy->prev->next = dummy->next;
+			}
+			procList->size--;
+			return dummy;
+		}
+		else{
+			dummy= dummy->next;
 		}
 	}
-	//Remove the item from the list
-	dummy->prev->next = dummy->next;
-	dummy->next->prev = dummy->prev;
-	//Decrement the size
-	procList->size--;
-	//We've either found the node or returned null, return the process
-	return dummy;
+	//Couldn't find it
+	return NULL;
 }
 
 void printProcesses(ProcessList * procList) {

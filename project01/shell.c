@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
 	//Main loop
 	while (1) {
-		int status;
+		int status = 0;
 
 		memset(&input, '\0', sizeof(input));
 		//Display the shell prompt
@@ -43,6 +43,15 @@ int main(int argc, char *argv[]) {
 
 		//Grab input from user prompt
 		fgets(input, 300, stdin);
+
+		pid_t pid = waitpid(-1, &status,
+		WNOHANG);
+		if (pid > 0) {
+			Process * ended = removeFromList(pList, pid);
+			if (ended != NULL) {
+				printstatus(status, ended->pid, ended->procname);
+			}
+		}
 
 		//Split the input line into an array of char arrays (string array)
 		int numArgs;
@@ -112,7 +121,7 @@ int main(int argc, char *argv[]) {
 			printProcesses(pList);
 		} else {
 			//If none of the built in functions, search the PATH for an executable
-			Process * executed = (Process *) malloc (sizeof(Process));
+			Process * executed = (Process *) malloc(sizeof(Process));
 			execute(inputArgs, executed);
 			if (!nowait) {
 				//If nowait flag is not set, wait until child process completes
