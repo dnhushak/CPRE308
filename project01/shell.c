@@ -123,7 +123,11 @@ int main(int argc, char *argv[]) {
 		}
 		//cd - change current directory
 		else if (!(strcmp(inputArgs[0], "cd"))) {
-			chdir(inputArgs[1]);
+			if (numArgs == 1 || !(strcmp(inputArgs[1], "~"))) {
+				chdir(getenv("HOME"));
+			} else {
+				chdir(inputArgs[1]);
+			}
 			printf("Present Wording Directory is: %s\n", getwd(buf));
 		}
 		//get - get an environment variable
