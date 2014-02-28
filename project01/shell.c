@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
 			} else {
 				chdir(inputArgs[1]);
 			}
-			printf("Present Wording Directory is: %s\n", getwd(buf));
+			printf("Present Wording Directory is: %s\n", getcwd(buf, sizeof(buf)));
 		}
 		//get - get an environment variable
 		else if (!(strcmp(inputArgs[0], "get"))) {
