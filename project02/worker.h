@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "commandList.h"
 #include "utils.h"
-#include "bank.h"
+#include "Bank.h"
 
 typedef struct pthreadArgs {
 	CommandList * cmdListArg;
