@@ -9,6 +9,8 @@
 #include <fcntl.h>
 #include <pthread.h>
 
+void * worker();
+
 int main(int argc, char *argv[]) {
 
 	//User input prompt variables
@@ -16,26 +18,31 @@ int main(int argc, char *argv[]) {
 	char input[300];
 	char *inputArgs[30];
 
-	int numWorkers;
-	int	numAccounts;
-	char * outFile;
-
 	// Grab all the arguments
-	if (argc !=4 ){
+	if (argc != 4) {
 		printf("< Incorrect number of arguments!\n");
 		exit(0);
 	}
-	numWorkers = atoi(argv[1]);
-	numAccounts = atoi(argv[2]);
-	outFile = argv[3];
+	int numWorkers = atoi(argv[1]);
+	int numAccounts = atoi(argv[2]);
+	char * outFile = argv[3];
+
+	// Initialize worker threads
+	pthread_t worker_tid[numWorkers];
+	int thread_index[numWorkers];
+	int i;
+	for (i = 0; i < numWorkers; i++) {
+		thread_index[i] = i;
+		pthread_create(&worker_tid[i], NULL, worker, (void *) &thread_index[i]);
+	}
 
 	// Initialize all the accouts and locks for said accounts
-	if(initialize_accounts(numAccounts) == 0){
+	if (initialize_accounts(numAccounts) == 0) {
 		printf("< Initialization Error!");
 		exit(0);
 	}
 	pthread_mutex_t locks[numAccounts];
-
+	int id = 0;
 
 	//Main loop
 	while (1) {
@@ -64,26 +71,34 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
-
-
 		//All of the checks for user input
 		//exit - exit normally
 		if (!(strcmp(inputArgs[0], "END"))) {
-			exit(2);
+			break;
 		}
 		//pid - print the process ID
 		else if (!(strcmp(inputArgs[0], "TRANS"))) {
-			printf("Process id is: [%d]\n", getpid());
-			writeToFile(outFile, "TRANSTEST\n");
+			id++;
+			printf("< ID %d\n", id);
+//			writeToFile(outFile, "TRANSTEST\n");
 		}
 		//ppid - print the parent's process ID
 		else if (!(strcmp(inputArgs[0], "CHECK"))) {
-			printf("Parent Process id is: [%d]\n", getppid());
+			id++;
+			printf("< ID %d\n", id);
 		} else {
 			printf("< Invalid command\n");
+			continue;
 		}
-
-
-
 	}
+
+	// Wait for all worker threads to complete
+	for (i = 0; i < numWorkers; i++) {
+		pthread_join(worker_tid[i], NULL);
+	}
+	exit(1);
+}
+
+void * worker() {
+	return NULL;
 }

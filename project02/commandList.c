@@ -1,0 +1,45 @@
+#include "commandList.h"
+
+void push(CommandList * cmdList, Command * cmd) {
+	if (cmdList->size == 0) {
+		//Empty list
+		cmd->prev = NULL;
+		//Have the head point to the new process
+		cmdList->head = cmd;
+		//Foot also points to the new process
+		cmdList->foot = cmdList->head;
+		//Increment the size
+		cmdList->size++;
+	} else {
+		//Place at the end of the list
+		cmd->prev = cmdList->foot;
+		cmd->prev->next = cmd;
+		//Make the foot point to the new end of the list
+		cmdList->foot = cmd;
+		//Increment the size
+		cmdList->size++;
+	}
+
+	cmd->next = NULL;
+}
+
+Command * pop(CommandList * cmdList) {
+	if (cmdList->size == 0) {
+		//empty list, return null
+		return NULL;
+	}
+
+	// Grab the command to pop
+	Command * cmd = cmdList->head;
+
+	// Point the head to the next in line
+	cmdList->head = cmdList->head->next;
+
+	// Remove the backwards link to the new first
+	cmdList->head->prev = NULL;
+
+	// Decrement command list size
+	cmdList->size--;
+	return cmd;
+}
+
