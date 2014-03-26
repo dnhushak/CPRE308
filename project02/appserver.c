@@ -2,26 +2,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "splitArgs.h"
 #include <sys/types.h>
 #include <sys/time.h>
-#include "writeToFile.h"
-#include "Bank.h"
 #include <fcntl.h>
 #include <pthread.h>
+
+#include "splitArgs.h"
+#include "Bank.h"
+#include "utils.h"
 #include "commandList.h"
-
-typedef struct pthreadArgs {
-	CommandList * cmdListArg;
-	char * outFileArg;
-	pthread_mutex_t * locksArg;
-	int * numAccounts;
-} pthreadArgs;
-
-void * worker(void *);
+#include "worker.h"
 
 int main(int argc, char *argv[]) {
-
 	//User input prompt variables
 	char prompt[2] = ">";
 	char input[300];
@@ -90,43 +82,33 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
-		// Create a new command
-		// Command will get freed when it is executed (in the thread)
-		Command * cmd = (Command*) malloc(sizeof(Command*));
-
 		// Increment ID
 		id++;
-		// Set the command ID
-		cmd->id = id;
-		// Set the command time
-		gettimeofday(&cmd->time, NULL);
-		// Copy over all the arguments
-		cmd->args = (int *) malloc(sizeof(int[numArgs]));
-		int i;
-		for (i = 1; i < numArgs; i++) {
-			cmd->args[i] = atoi(inputArgs[i]);
-		}
+
+		// Create a new command
+		// Command will get freed when it is executed (in the thread)
+		Command * cmd = commandInit(id, numArgs, inputArgs);
 
 		//All of the checks for user input
 		// END - exit normally, and shutdown all worker threads
 		if (!(strcmp(inputArgs[0], "END"))) {
-			cmd->args[0] = 0;
-			printf("< Ending program\n");
+			cmd->args[0] = -1;
 		}
 		// CHECK - check a balance
 		else if (!(strcmp(inputArgs[0], "CHECK"))) {
-			cmd->args[0] = 1;
 			if (numArgs < 2) {
 				// OH NO A GOTO OH GOD WHYYYYYYYYY
 				goto invalid;
 			}
+			cmd->args[0] = 100;
+			printf("\nCHECK: %d\n", cmd->args[0]);
 		}
 		// TRANS - perform a transaction
 		else if (!(strcmp(inputArgs[0], "TRANS"))) {
 			cmd->args[0] = 2;
 			// Check for more than 1 argument, and odd number of arguments
 			// (account and value pair, plus the initial argument
-			if (numArgs < 2 || numArgs % 2 != 0) {
+			if (numArgs < 2 || numArgs % 2 == 0) {
 				goto invalid;
 			}
 		}
@@ -148,13 +130,13 @@ int main(int argc, char *argv[]) {
 		push(cmdList, cmd);
 		pthread_mutex_unlock(&(cmdList->lock));
 
-		// Check for end
-		if (cmd->args[0] == 0) {
+		if (cmd->args[0] == -1) {
+			printf("< Ending program\n");
 			break;
 		}
 
 		// Print the ID
-		printf("< ID %d\n", cmd->id);
+		printf("< ID %d CommandTypeC: %s, CommandTypeA: %d, CommandTypeB: %d ListSize: %d\n", cmd->id,inputArgs[0], cmd->args[0], cmdList->foot->args[0], cmdList->size);
 	}
 
 	// Wait for all worker threads to complete
@@ -166,79 +148,4 @@ int main(int argc, char *argv[]) {
 	free(locks);
 	free(args);
 	exit(1);
-}
-
-void * worker(void * args) {
-	// Get the arguments from the input struct
-	pthreadArgs * pargs = args;
-	CommandList * cmdList = pargs->cmdListArg;
-	pthread_mutex_t * locks = pargs->locksArg;
-	char * outFile = pargs->outFileArg;
-	int numAccounts = *(pargs->numAccounts);
-	// Output buffer to write to file
-	char out[300];
-	struct timeval exectime;
-
-	while (1) {
-
-		if (cmdList->size == 0) {
-			usleep(10000);
-			continue;
-		}
-
-		// Lock the command list
-		pthread_mutex_lock(&(cmdList->lock));
-
-		// Get the next command to execute
-		Command * cmd = pop(cmdList);
-
-		// Unlock the command list
-		pthread_mutex_unlock(&(cmdList->lock));
-
-		switch (cmd->args[0]) {
-			case 0: {
-				//End
-
-				// Push the command to the end of the command list so all threads receive the command
-				pthread_mutex_lock(&(cmdList->lock));
-				push(cmdList, cmd);
-				pthread_mutex_unlock(&(cmdList->lock));
-
-				return NULL;
-				break;
-			}
-			case 1: {
-				// Balance Check
-				// Get the account number
-				int accountIndex = cmd->args[1];
-
-				// Check for valid account number
-				if (accountIndex <= numAccounts && accountIndex > 0) {
-
-					// Get the account balance
-					pthread_mutex_lock(&locks[accountIndex]);
-					int balance = read_account(accountIndex);
-					pthread_mutex_unlock(&locks[accountIndex]);
-					sprintf(out, "%d BAL %d", cmd->id, balance);
-				} else {
-					// Invalid Account
-					sprintf(out, "%d INVALID ACCOUNT", cmd->id);
-				}
-				// Write to the file
-				writeToFile(outFile, out);
-				break;
-			}
-			case 2: {
-				// Transaction
-			}
-
-		}
-		gettimeofday(&exectime, NULL);
-		sprintf(out, "\r\t\t\t\tTIME %ld.%06d %ld.%06d\n", cmd->time.tv_sec,
-				cmd->time.tv_usec, exectime.tv_sec, exectime.tv_usec);
-		writeToFile(outFile, out);
-		free(cmd);
-	}
-
-	return NULL;
 }

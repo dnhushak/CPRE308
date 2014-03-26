@@ -1,15 +1,21 @@
 #include "commandList.h"
 
 void push(CommandList * cmdList, Command * cmd) {
+	printf("\nCommand ID before push: %d\n", cmd->args[0]);
 	if (cmdList->size == 0) {
+		printf("\n1: %d\n", cmd->args[0]);
 		//Empty list
-		cmd->prev = NULL;
+		cmd->prev = cmd;
+		printf("\n2: %d\n", cmd->args[0]);
 		//Have the head point to the new process
 		cmdList->head = cmd;
+		printf("\n3: %d\n", cmd->args[0]);
 		//Foot also points to the new process
 		cmdList->foot = cmdList->head;
+		printf("\n4: %d\n", cmd->args[0]);
 		//Increment the size
 		cmdList->size++;
+		printf("\n5: %d\n", cmd->args[0]);
 	} else {
 		//Place at the end of the list
 		cmd->prev = cmdList->foot;
@@ -19,8 +25,8 @@ void push(CommandList * cmdList, Command * cmd) {
 		//Increment the size
 		cmdList->size++;
 	}
-
 	cmd->next = NULL;
+	printf("\nCommand ID after push: %d\n", cmd->args[0]);
 }
 
 Command * pop(CommandList * cmdList) {
@@ -43,7 +49,7 @@ Command * pop(CommandList * cmdList) {
 		// Point the head to the next in line
 		cmdList->head = cmdList->head->next;
 
-		// Remove the backwards link to the new first
+		// Remove the backwards link from the new first
 		cmdList->head->prev = NULL;
 	}
 	return cmd;
@@ -55,5 +61,21 @@ CommandList * listInit(){
 	cmdList->head = cmdList->foot = NULL;
 	pthread_mutex_init(&(cmdList->lock), NULL);
 	return cmdList;
+}
+
+Command * commandInit(int id, int numArgs, char ** inputArgs){
+	Command * cmd = (Command*) malloc(sizeof(Command*));
+	// Set the command ID
+	cmd->id = id;
+	// Set the command time
+	gettimeofday(&cmd->time, NULL);
+	// Copy over all the arguments
+	cmd->numArgs = numArgs;
+	cmd->args = (int *) malloc(sizeof(int) * numArgs);
+	int i;
+	for (i = 1; i < numArgs; i++) {
+		cmd->args[i] = atoi(inputArgs[i]);
+	}
+	return cmd;
 }
 

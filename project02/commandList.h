@@ -10,6 +10,7 @@
 typedef struct Command {
 	int id;
 	int * args;
+	int numArgs;
 	struct timeval time;
 	struct Command * next;
 	struct Command * prev;
@@ -25,3 +26,4 @@ typedef struct CommandList {
 void push(CommandList *, Command *);
 struct Command * pop(CommandList *);
 CommandList * listInit();
+Command * commandInit(int, int, char * *);
