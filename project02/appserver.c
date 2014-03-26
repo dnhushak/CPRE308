@@ -18,16 +18,17 @@ int main(int argc, char *argv[]) {
 	int	numAccounts;
 	char * outFile;
 
+	// Grab all the arguments
 	if (argc !=4 ){
 		printf("< Incorrect number of arguments!\n");
 		exit(0);
 	}
-
 	numWorkers = atoi(argv[1]);
 	numAccounts = atoi(argv[2]);
 	outFile = argv[3];
 
-
+	// Initialize all the accouts
+	initialize_accounts(numAccounts);
 
 
 	//Main loop
