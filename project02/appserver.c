@@ -8,15 +8,23 @@
 #include "Bank.h"
 #include <fcntl.h>
 #include <pthread.h>
+#include "commandList.h"
 
-void * worker();
+typedef struct pthreadArgs {
+	CommandList * cmdListArg;
+	char * outFileArg;
+	pthread_mutex_t * locksArg;
+	int * endArg;
+} pthreadArgs;
+
+void * worker(void *);
 
 int main(int argc, char *argv[]) {
 
 	//User input prompt variables
 	char prompt[2] = ">";
 	char input[300];
-	char *inputArgs[30];
+	char * inputArgs[30];
 
 	// Grab all the arguments
 	if (argc != 4) {
@@ -27,26 +35,40 @@ int main(int argc, char *argv[]) {
 	int numAccounts = atoi(argv[2]);
 	char * outFile = argv[3];
 
-	// Initialize worker threads
-	pthread_t worker_tid[numWorkers];
-	int thread_index[numWorkers];
-	int i;
-	for (i = 0; i < numWorkers; i++) {
-		thread_index[i] = i;
-		pthread_create(&worker_tid[i], NULL, worker, (void *) &thread_index[i]);
-	}
+	// Initialize Command queue
+	CommandList * cmdList = (CommandList*) malloc(sizeof(CommandList*));
+	cmdList->size = 0;
+	cmdList->head = cmdList->foot = NULL;
+	printf("1 %d\n", cmdList->size);
+	int end = 0;
 
 	// Initialize all the accouts and locks for said accounts
 	if (initialize_accounts(numAccounts) == 0) {
 		printf("< Initialization Error!");
 		exit(0);
 	}
-	pthread_mutex_t locks[numAccounts];
+	pthread_mutex_t * locks = (pthread_mutex_t *) malloc(
+			sizeof(pthread_mutex_t[numAccounts]));
+
+	// Initialize worker threads
+	pthreadArgs * args = (pthreadArgs *) malloc(sizeof(pthreadArgs *));
+	args->cmdListArg = cmdList;
+	args->outFileArg = outFile;
+	args->locksArg = locks;
+	args->endArg = &end;
+
+	pthread_t worker_tid[numWorkers];
+	int thread_index[numWorkers];
+	int i;
+	for (i = 0; i < numWorkers; i++) {
+		thread_index[i] = i;
+		pthread_create(&worker_tid[i], NULL, worker, (void *) args);
+	}
+
 	int id = 0;
 
 	//Main loop
 	while (1) {
-
 		//Zero out the input buffer
 		memset(&input, '\0', sizeof(input));
 
@@ -71,9 +93,12 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
+		printf("< %s\n", input);
 		//All of the checks for user input
 		//exit - exit normally
 		if (!(strcmp(inputArgs[0], "END"))) {
+			printf("< Ending program\n");
+			end = 1;
 			break;
 		}
 		//pid - print the process ID
@@ -99,6 +124,48 @@ int main(int argc, char *argv[]) {
 	exit(1);
 }
 
-void * worker() {
+void * worker(void * args) {
+	// Get the arguments from the input struct
+	pthreadArgs * pargs = args;
+	CommandList * cmdList = pargs->cmdListArg;
+	pthread_mutex_t * locks = pargs->locksArg;
+	char * outFile = pargs->outFileArg;
+	int * end = pargs->endArg;
+
+	// Wait until there is a command to execute
+	while (*end != 1 || cmdList->size != 0) {
+
+		//printf("End: %d Command List Size: %d\n", *end, cmdList->size);
+
+		if (cmdList->size == 0) {
+			//printf("asdf\n");
+			sleep(1);
+			continue;
+		}
+//		// Lock the command list
+//		pthread_mutex_lock(&cmdList->lock);
+//
+//		// Get the next command to execute
+//		Command * cmd = pop(cmdList);
+//
+//		// Unlock the command list
+//		pthread_mutex_unlock(&cmdList->lock);
+//
+//		if (cmd->commandType == 0) {
+//			char out[300];
+//			int accountIndex = atoi(cmd->args[1]);
+//
+//			pthread_mutex_lock(&locks[accountIndex]);
+//			int balance = read_account(accountIndex);
+//			pthread_mutex_unlock(&locks[accountIndex]);
+//
+//			sprintf(out, "%d BAL %d", cmd->id, balance);
+//			// Balance check
+//			writeToFile(outFile, out);
+//
+//		}
+//		free(cmd);
+	}
+
 	return NULL;
 }

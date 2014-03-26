@@ -7,6 +7,7 @@
 
 typedef struct Command {
 	int commandType;
+	int id;
 	char * * args;
 	struct Command * next;
 	struct Command * prev;

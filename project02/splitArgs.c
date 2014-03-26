@@ -14,7 +14,6 @@
  * and the character following it is ignored by standard processing (like spaces being used as a delimeter).
  */
 int splitArgs(char *line, char **argv) {
-	char *end = line + strlen(line);
 	//Argument counter
 	int count = 0;
 
@@ -22,6 +21,7 @@ int splitArgs(char *line, char **argv) {
 	*argv++ = line;
 	count++;
 
+	int i;
 	//Wait until the end of the line
 	while (*line != '\0') {
 
@@ -37,7 +37,9 @@ int splitArgs(char *line, char **argv) {
 				//Increase the argument counter
 				count++;
 			}
+
 		}
+		line++;
 	}
 
 	//End of argument list
