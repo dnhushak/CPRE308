@@ -32,14 +32,28 @@ Command * pop(CommandList * cmdList) {
 	// Grab the command to pop
 	Command * cmd = cmdList->head;
 
-	// Point the head to the next in line
-	cmdList->head = cmdList->head->next;
-
-	// Remove the backwards link to the new first
-	cmdList->head->prev = NULL;
-
 	// Decrement command list size
 	cmdList->size--;
+
+	if (cmdList->size == 0) {
+		//List is now empty
+		cmdList->head = NULL;
+		cmdList->foot = NULL;
+	} else {
+		// Point the head to the next in line
+		cmdList->head = cmdList->head->next;
+
+		// Remove the backwards link to the new first
+		cmdList->head->prev = NULL;
+	}
 	return cmd;
+}
+
+CommandList * listInit(){
+	CommandList * cmdList = (CommandList*) malloc(sizeof(CommandList*));
+	cmdList->size = 0;
+	cmdList->head = cmdList->foot = NULL;
+	pthread_mutex_init(&(cmdList->lock), NULL);
+	return cmdList;
 }
 

@@ -21,7 +21,6 @@ int splitArgs(char *line, char **argv) {
 	*argv++ = line;
 	count++;
 
-	int i;
 	//Wait until the end of the line
 	while (*line != '\0') {
 

@@ -14,7 +14,6 @@ typedef struct pthreadArgs {
 	CommandList * cmdListArg;
 	char * outFileArg;
 	pthread_mutex_t * locksArg;
-	int * endArg;
 } pthreadArgs;
 
 void * worker(void *);
@@ -36,11 +35,7 @@ int main(int argc, char *argv[]) {
 	char * outFile = argv[3];
 
 	// Initialize Command queue
-	CommandList * cmdList = (CommandList*) malloc(sizeof(CommandList*));
-	cmdList->size = 0;
-	cmdList->head = cmdList->foot = NULL;
-	printf("1 %d\n", cmdList->size);
-	int end = 0;
+	CommandList * cmdList = listInit();
 
 	// Initialize all the accouts and locks for said accounts
 	if (initialize_accounts(numAccounts) == 0) {
@@ -55,7 +50,6 @@ int main(int argc, char *argv[]) {
 	args->cmdListArg = cmdList;
 	args->outFileArg = outFile;
 	args->locksArg = locks;
-	args->endArg = &end;
 
 	pthread_t worker_tid[numWorkers];
 	int thread_index[numWorkers];
@@ -93,34 +87,61 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
-		printf("< %s\n", input);
+		// Create a new command
+		Command * cmd = (Command*) malloc(sizeof(Command*));
+		id++;
+		cmd->id = id;
+
 		//All of the checks for user input
-		//exit - exit normally
+		// END - exit normally, and shutdown all worker threads
 		if (!(strcmp(inputArgs[0], "END"))) {
+			cmd->commandType = 0;
 			printf("< Ending program\n");
-			end = 1;
-			break;
 		}
-		//pid - print the process ID
-		else if (!(strcmp(inputArgs[0], "TRANS"))) {
-			id++;
-			printf("< ID %d\n", id);
-//			writeToFile(outFile, "TRANSTEST\n");
-		}
-		//ppid - print the parent's process ID
+		// CHECK - check a balance
 		else if (!(strcmp(inputArgs[0], "CHECK"))) {
-			id++;
-			printf("< ID %d\n", id);
-		} else {
-			printf("< Invalid command\n");
+			cmd->commandType = 1;
+			cmd->args = (char**) malloc(sizeof(inputArgs));
+			cmd->args = inputArgs;
+		}
+		// TRANS - perform a transaction
+		else if (!(strcmp(inputArgs[0], "TRANS"))) {
+			cmd->commandType = 2;
+			cmd->args = inputArgs;
+		}
+		// Invalid command
+		else {
+			// Reset ID
+			id--;
+			// Discard command
+			free(cmd);
+			// Inform user of incorrect command
+			printf("< Invalid command, commands are: END, CHECK, TRANS\n");
 			continue;
 		}
+
+		// Push the command to the command list
+		pthread_mutex_lock(&(cmdList->lock));
+		push(cmdList, cmd);
+		pthread_mutex_unlock(&(cmdList->lock));
+
+		// Check for end
+		if (cmd->commandType == 0) {
+			break;
+		}
+
+		// Print the ID
+		printf("< ID %d\n", cmd->id);
 	}
 
 	// Wait for all worker threads to complete
 	for (i = 0; i < numWorkers; i++) {
 		pthread_join(worker_tid[i], NULL);
 	}
+
+	free(cmdList);
+	free(locks);
+	free(args);
 	exit(1);
 }
 
@@ -130,41 +151,53 @@ void * worker(void * args) {
 	CommandList * cmdList = pargs->cmdListArg;
 	pthread_mutex_t * locks = pargs->locksArg;
 	char * outFile = pargs->outFileArg;
-	int * end = pargs->endArg;
 
-	// Wait until there is a command to execute
-	while (*end != 1 || cmdList->size != 0) {
-
-		//printf("End: %d Command List Size: %d\n", *end, cmdList->size);
+	while (1) {
 
 		if (cmdList->size == 0) {
-			//printf("asdf\n");
-			sleep(1);
+			usleep(10000);
 			continue;
 		}
-//		// Lock the command list
-//		pthread_mutex_lock(&cmdList->lock);
-//
-//		// Get the next command to execute
-//		Command * cmd = pop(cmdList);
-//
-//		// Unlock the command list
-//		pthread_mutex_unlock(&cmdList->lock);
-//
-//		if (cmd->commandType == 0) {
-//			char out[300];
-//			int accountIndex = atoi(cmd->args[1]);
-//
-//			pthread_mutex_lock(&locks[accountIndex]);
-//			int balance = read_account(accountIndex);
-//			pthread_mutex_unlock(&locks[accountIndex]);
-//
-//			sprintf(out, "%d BAL %d", cmd->id, balance);
-//			// Balance check
-//			writeToFile(outFile, out);
-//
-//		}
-//		free(cmd);
+
+		// Lock the command list
+		pthread_mutex_lock(&(cmdList->lock));
+
+		// Get the next command to execute
+		Command * cmd = pop(cmdList);
+
+		// Unlock the command list
+		pthread_mutex_unlock(&(cmdList->lock));
+
+		switch (cmd->commandType) {
+			case 0: {
+				//End
+				printf("< Shutting down worker thread...\n");
+
+				// Push the command to the end of the command list so all threads receive the command
+				pthread_mutex_lock(&(cmdList->lock));
+				push(cmdList, cmd);
+				pthread_mutex_unlock(&(cmdList->lock));
+
+				return NULL;
+				break;
+			}
+			case 1: {
+				// Balance Check
+				int accountIndex = atoi(cmd->args[1]);
+
+				printf("Checking Index: %s\n", cmd->args[0]);
+				pthread_mutex_lock(&locks[accountIndex]);
+				int balance = read_account(accountIndex);
+				pthread_mutex_unlock(&locks[accountIndex]);
+
+				char out[300];
+				sprintf(out, "%d BAL %d\n", cmd->id, balance);
+				writeToFile(outFile, out);
+				break;
+			}
+
+		}
+		free(cmd);
 	}
 
 	return NULL;

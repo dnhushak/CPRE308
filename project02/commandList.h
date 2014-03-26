@@ -4,11 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 typedef struct Command {
 	int commandType;
 	int id;
-	char * * args;
+	char * args[];
 	struct Command * next;
 	struct Command * prev;
 } Command;
@@ -22,3 +23,4 @@ typedef struct CommandList {
 
 void push(CommandList *, Command *);
 struct Command * pop(CommandList *);
+CommandList * listInit();
