@@ -3,9 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "splitArgs.h"
-#include "execCommand.h"
 #include <sys/types.h>
-#include "processHistory.h"
+#include "writeToFile.h"
 #include <fcntl.h>
 
 int main(int argc, char *argv[]) {
@@ -58,24 +57,7 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
-//		int stdout_old = dup(1);
-//		int fd = 1;
-//		if (numArgs > 2 && !(strcmp(inputArgs[numArgs - 2], ">"))) {
-//			//Open the file
-//			fd = open(inputArgs[numArgs - 1], O_WRONLY | O_APPEND | O_CREAT,
-//			S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH);
-//
-//			//Redirect standard out
-//			if (dup2(fd, 1) < 0 || fd < 0) {
-//				exit(-1);
-//			}
-//			//Zero these arguments
-//			memset(&(inputArgs[numArgs - 1]), '\0',
-//					sizeof(inputArgs[numArgs - 1]));
-//			memset(&(inputArgs[numArgs - 2]), '\0',
-//					sizeof(inputArgs[numArgs - 2]));
-//			numArgs -= 2;
-//		}
+
 
 		//All of the checks for user input
 		//exit - exit normally
@@ -85,6 +67,7 @@ int main(int argc, char *argv[]) {
 		//pid - print the process ID
 		else if (!(strcmp(inputArgs[0], "TRANS"))) {
 			printf("Process id is: [%d]\n", getpid());
+			writeToFile(outFile, "TRANSTEST");
 		}
 		//ppid - print the parent's process ID
 		else if (!(strcmp(inputArgs[0], "CHECK"))) {
@@ -93,18 +76,7 @@ int main(int argc, char *argv[]) {
 			printf("< Invalid command\n");
 		}
 
-//		//Route stdout to stdout
-//		//(In case previous command was piped to a file)
-//		//close previous file descriptor
-//		close(fd);
-//		//Flush standard out
-//		fflush(stdout);
-//		//Redirect file stream to old standard out
-//		if (dup2(stdout_old, 1) < 0) {
-//			exit(-1);
-//		}
-//		//Close the saved old standard out file descriptor
-//		close(stdout_old);
+
 
 	}
 }
