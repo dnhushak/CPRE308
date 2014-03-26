@@ -47,7 +47,7 @@ Command * pop(CommandList * cmdList) {
 }
 
 CommandList * listInit(){
-	CommandList * cmdList = (CommandList*) malloc(sizeof(CommandList*));
+	CommandList * cmdList = (CommandList*) malloc(sizeof(CommandList));
 	cmdList->size = 0;
 	cmdList->head = cmdList->foot = NULL;
 	pthread_mutex_init(&(cmdList->lock), NULL);

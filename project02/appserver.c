@@ -36,8 +36,11 @@ int main(int argc, char *argv[]) {
 		printf("< Initialization Error!");
 		exit(0);
 	}
-	pthread_mutex_t * locks = (pthread_mutex_t *) malloc(
-			sizeof(pthread_mutex_t[numAccounts]));
+	pthread_mutex_t locks[numAccounts];
+	int j;
+	for (j = 0; j < numAccounts; j++) {
+		pthread_mutex_init(&(locks[j]), NULL);
+	}
 
 	// Initialize worker threads
 	pthreadArgs * args = (pthreadArgs *) malloc(sizeof(pthreadArgs *));
@@ -50,9 +53,9 @@ int main(int argc, char *argv[]) {
 	int thread_index[numWorkers];
 	int i;
 	/*for (i = 0; i < numWorkers; i++) {
-		thread_index[i] = i;
-		pthread_create(&worker_tid[i], NULL, worker, (void *) args);
-	}*/
+	 thread_index[i] = i;
+	 pthread_create(&worker_tid[i], NULL, worker, (void *) args);
+	 }*/
 
 	int id = 0;
 
