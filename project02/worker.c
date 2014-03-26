@@ -30,11 +30,9 @@ void * worker(void * args) {
 		// Unlock the command list
 		pthread_mutex_unlock(&(cmdList->lock));
 
-		printf("===Command ID: %d\n", cmd->args[0]);
 		switch (cmd->args[0]) {
-			case -1: {
+			case 0: {
 				//End
-				printf("Killing worker thread...\n");
 				// Push the command to the end of the command list so all threads receive the command
 				pthread_mutex_lock(&(cmdList->lock));
 				push(cmdList, cmd);

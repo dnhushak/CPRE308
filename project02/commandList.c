@@ -1,32 +1,23 @@
 #include "commandList.h"
 
 void push(CommandList * cmdList, Command * cmd) {
-	printf("\nCommand ID before push: %d\n", cmd->args[0]);
 	if (cmdList->size == 0) {
-		printf("\n1: %d\n", cmd->args[0]);
 		//Empty list
-		cmd->prev = cmd;
-		printf("\n2: %d\n", cmd->args[0]);
+
 		//Have the head point to the new process
 		cmdList->head = cmd;
-		printf("\n3: %d\n", cmd->args[0]);
 		//Foot also points to the new process
 		cmdList->foot = cmdList->head;
-		printf("\n4: %d\n", cmd->args[0]);
-		//Increment the size
-		cmdList->size++;
-		printf("\n5: %d\n", cmd->args[0]);
 	} else {
 		//Place at the end of the list
 		cmd->prev = cmdList->foot;
 		cmd->prev->next = cmd;
 		//Make the foot point to the new end of the list
 		cmdList->foot = cmd;
-		//Increment the size
-		cmdList->size++;
 	}
+	//Increment the size
+	cmdList->size++;
 	cmd->next = NULL;
-	printf("\nCommand ID after push: %d\n", cmd->args[0]);
 }
 
 Command * pop(CommandList * cmdList) {
@@ -65,6 +56,7 @@ CommandList * listInit(){
 
 Command * commandInit(int id, int numArgs, char ** inputArgs){
 	Command * cmd = (Command*) malloc(sizeof(Command*));
+
 	// Set the command ID
 	cmd->id = id;
 	// Set the command time
@@ -72,9 +64,11 @@ Command * commandInit(int id, int numArgs, char ** inputArgs){
 	// Copy over all the arguments
 	cmd->numArgs = numArgs;
 	cmd->args = (int *) malloc(sizeof(int) * numArgs);
-	int i;
-	for (i = 1; i < numArgs; i++) {
-		cmd->args[i] = atoi(inputArgs[i]);
+	printf("Size of inputArgs %lu | cmd->args; %lu\n", sizeof((cmd->args)), sizeof(int) * numArgs);
+	//memset(&(cmd->args), '0', sizeof(int) * numArgs);
+	int j;
+	for (j = 1; j < numArgs; j++) {
+		cmd->args[j] = atoi(inputArgs[j]);
 	}
 	return cmd;
 }

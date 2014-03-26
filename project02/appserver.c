@@ -49,10 +49,10 @@ int main(int argc, char *argv[]) {
 	pthread_t worker_tid[numWorkers];
 	int thread_index[numWorkers];
 	int i;
-	for (i = 0; i < numWorkers; i++) {
+	/*for (i = 0; i < numWorkers; i++) {
 		thread_index[i] = i;
 		pthread_create(&worker_tid[i], NULL, worker, (void *) args);
-	}
+	}*/
 
 	int id = 0;
 
@@ -92,16 +92,15 @@ int main(int argc, char *argv[]) {
 		//All of the checks for user input
 		// END - exit normally, and shutdown all worker threads
 		if (!(strcmp(inputArgs[0], "END"))) {
-			cmd->args[0] = -1;
+			cmd->args[0] = 0;
 		}
 		// CHECK - check a balance
 		else if (!(strcmp(inputArgs[0], "CHECK"))) {
+			cmd->args[0] = 1;
 			if (numArgs < 2) {
 				// OH NO A GOTO OH GOD WHYYYYYYYYY
 				goto invalid;
 			}
-			cmd->args[0] = 100;
-			printf("\nCHECK: %d\n", cmd->args[0]);
 		}
 		// TRANS - perform a transaction
 		else if (!(strcmp(inputArgs[0], "TRANS"))) {
@@ -130,13 +129,13 @@ int main(int argc, char *argv[]) {
 		push(cmdList, cmd);
 		pthread_mutex_unlock(&(cmdList->lock));
 
-		if (cmd->args[0] == -1) {
+		if (cmd->args[0] == 0) {
 			printf("< Ending program\n");
 			break;
 		}
 
 		// Print the ID
-		printf("< ID %d CommandTypeC: %s, CommandTypeA: %d, CommandTypeB: %d ListSize: %d\n", cmd->id,inputArgs[0], cmd->args[0], cmdList->foot->args[0], cmdList->size);
+		printf("< ID %d\n", cmd->id);
 	}
 
 	// Wait for all worker threads to complete

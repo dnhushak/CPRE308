@@ -9,11 +9,11 @@
 
 typedef struct Command {
 	int id;
-	int * args;
 	int numArgs;
 	struct timeval time;
 	struct Command * next;
 	struct Command * prev;
+	int * args;
 } Command;
 
 typedef struct CommandList {
