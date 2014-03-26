@@ -5,7 +5,9 @@
 #include "splitArgs.h"
 #include <sys/types.h>
 #include "writeToFile.h"
+#include "Bank.h"
 #include <fcntl.h>
+#include <pthread.h>
 
 int main(int argc, char *argv[]) {
 
@@ -27,8 +29,12 @@ int main(int argc, char *argv[]) {
 	numAccounts = atoi(argv[2]);
 	outFile = argv[3];
 
-	// Initialize all the accouts
-	initialize_accounts(numAccounts);
+	// Initialize all the accouts and locks for said accounts
+	if(initialize_accounts(numAccounts) == 0){
+		printf("< Initialization Error!");
+		exit(0);
+	}
+	pthread_mutex_t locks[numAccounts];
 
 
 	//Main loop
@@ -68,7 +74,7 @@ int main(int argc, char *argv[]) {
 		//pid - print the process ID
 		else if (!(strcmp(inputArgs[0], "TRANS"))) {
 			printf("Process id is: [%d]\n", getpid());
-			writeToFile(outFile, "TRANSTEST");
+			writeToFile(outFile, "TRANSTEST\n");
 		}
 		//ppid - print the parent's process ID
 		else if (!(strcmp(inputArgs[0], "CHECK"))) {
