@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 typedef struct Command {
-	int commandType;
 	int id;
-	char * args[];
+	int * args;
+	struct timeval time;
 	struct Command * next;
 	struct Command * prev;
 } Command;

@@ -4,6 +4,7 @@
 #include <string.h>
 #include "splitArgs.h"
 #include <sys/types.h>
+#include <sys/time.h>
 #include "writeToFile.h"
 #include "Bank.h"
 #include <fcntl.h>
@@ -14,6 +15,7 @@ typedef struct pthreadArgs {
 	CommandList * cmdListArg;
 	char * outFileArg;
 	pthread_mutex_t * locksArg;
+	int * numAccounts;
 } pthreadArgs;
 
 void * worker(void *);
@@ -50,6 +52,7 @@ int main(int argc, char *argv[]) {
 	args->cmdListArg = cmdList;
 	args->outFileArg = outFile;
 	args->locksArg = locks;
+	args->numAccounts = &numAccounts;
 
 	pthread_t worker_tid[numWorkers];
 	int thread_index[numWorkers];
@@ -88,29 +91,49 @@ int main(int argc, char *argv[]) {
 		}
 
 		// Create a new command
+		// Command will get freed when it is executed (in the thread)
 		Command * cmd = (Command*) malloc(sizeof(Command*));
+
+		// Increment ID
 		id++;
+		// Set the command ID
 		cmd->id = id;
+		// Set the command time
+		gettimeofday(&cmd->time, NULL);
+		// Copy over all the arguments
+		cmd->args = (int *) malloc(sizeof(int[numArgs]));
+		int i;
+		for (i = 1; i < numArgs; i++) {
+			cmd->args[i] = atoi(inputArgs[i]);
+		}
 
 		//All of the checks for user input
 		// END - exit normally, and shutdown all worker threads
 		if (!(strcmp(inputArgs[0], "END"))) {
-			cmd->commandType = 0;
+			cmd->args[0] = 0;
 			printf("< Ending program\n");
 		}
 		// CHECK - check a balance
 		else if (!(strcmp(inputArgs[0], "CHECK"))) {
-			cmd->commandType = 1;
-			cmd->args = (char**) malloc(sizeof(inputArgs));
-			cmd->args = inputArgs;
+			cmd->args[0] = 1;
+			if (numArgs < 2) {
+				// OH NO A GOTO OH GOD WHYYYYYYYYY
+				goto invalid;
+			}
 		}
 		// TRANS - perform a transaction
 		else if (!(strcmp(inputArgs[0], "TRANS"))) {
-			cmd->commandType = 2;
-			cmd->args = inputArgs;
+			cmd->args[0] = 2;
+			// Check for more than 1 argument, and odd number of arguments
+			// (account and value pair, plus the initial argument
+			if (numArgs < 2 || numArgs % 2 != 0) {
+				goto invalid;
+			}
 		}
 		// Invalid command
 		else {
+			invalid:
+
 			// Reset ID
 			id--;
 			// Discard command
@@ -126,7 +149,7 @@ int main(int argc, char *argv[]) {
 		pthread_mutex_unlock(&(cmdList->lock));
 
 		// Check for end
-		if (cmd->commandType == 0) {
+		if (cmd->args[0] == 0) {
 			break;
 		}
 
@@ -151,6 +174,10 @@ void * worker(void * args) {
 	CommandList * cmdList = pargs->cmdListArg;
 	pthread_mutex_t * locks = pargs->locksArg;
 	char * outFile = pargs->outFileArg;
+	int numAccounts = *(pargs->numAccounts);
+	// Output buffer to write to file
+	char out[300];
+	struct timeval exectime;
 
 	while (1) {
 
@@ -168,10 +195,9 @@ void * worker(void * args) {
 		// Unlock the command list
 		pthread_mutex_unlock(&(cmdList->lock));
 
-		switch (cmd->commandType) {
+		switch (cmd->args[0]) {
 			case 0: {
 				//End
-				printf("< Shutting down worker thread...\n");
 
 				// Push the command to the end of the command list so all threads receive the command
 				pthread_mutex_lock(&(cmdList->lock));
@@ -183,20 +209,34 @@ void * worker(void * args) {
 			}
 			case 1: {
 				// Balance Check
-				int accountIndex = atoi(cmd->args[1]);
+				// Get the account number
+				int accountIndex = cmd->args[1];
 
-				printf("Checking Index: %s\n", cmd->args[0]);
-				pthread_mutex_lock(&locks[accountIndex]);
-				int balance = read_account(accountIndex);
-				pthread_mutex_unlock(&locks[accountIndex]);
+				// Check for valid account number
+				if (accountIndex <= numAccounts && accountIndex > 0) {
 
-				char out[300];
-				sprintf(out, "%d BAL %d\n", cmd->id, balance);
+					// Get the account balance
+					pthread_mutex_lock(&locks[accountIndex]);
+					int balance = read_account(accountIndex);
+					pthread_mutex_unlock(&locks[accountIndex]);
+					sprintf(out, "%d BAL %d", cmd->id, balance);
+				} else {
+					// Invalid Account
+					sprintf(out, "%d INVALID ACCOUNT", cmd->id);
+				}
+				// Write to the file
 				writeToFile(outFile, out);
 				break;
 			}
+			case 2: {
+				// Transaction
+			}
 
 		}
+		gettimeofday(&exectime, NULL);
+		sprintf(out, "\r\t\t\t\tTIME %ld.%06d %ld.%06d\n", cmd->time.tv_sec,
+				cmd->time.tv_usec, exectime.tv_sec, exectime.tv_usec);
+		writeToFile(outFile, out);
 		free(cmd);
 	}
 
