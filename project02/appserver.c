@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Initialize worker threads
-	pthreadArgs * args = (pthreadArgs *) malloc(sizeof(pthreadArgs *));
+	pthreadArgs * args = (pthreadArgs *) malloc(sizeof(pthreadArgs));
 	args->cmdListArg = cmdList;
 	args->outFileArg = outFile;
 	args->locksArg = locks;

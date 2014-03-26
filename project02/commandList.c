@@ -55,12 +55,12 @@ CommandList * listInit(){
 }
 
 Command * commandInit(int id, int numArgs, char ** inputArgs){
-	Command * cmd = (Command*) malloc(sizeof(Command*));
+	Command * cmd = (Command*) malloc(sizeof(Command));
 
 	// Set the command ID
 	cmd->id = id;
 	// Set the command time
-	gettimeofday(&cmd->time, NULL);
+	gettimeofday(&(cmd->time), NULL);
 	// Copy over all the arguments
 	cmd->numArgs = numArgs;
 	cmd->args = (int *) malloc(sizeof(int) * numArgs);
