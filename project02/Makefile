@@ -22,7 +22,7 @@ OBJECTS = $(addsuffix $(BINARY), $(notdir $(basename $(SOURCES))))
 INCLUDE = $(foreach DIR, $(DIRLIST), -I$(DIR))
 
 $(EXE): $(OBJECTS)
-	$(CXX) $(CFLAGS) $(OBJECTS) -o $(EXE) $(LDFLAGS)
+	$(CXX) $(CFLAGS) $(OBJECTS) -o $(EXE) $(LDFLAGS) -lpthread
 
 %$(BINARY) : $(SRCEDIR)%$(SOURCE)
 	$(CXX) $(CFLAGS) $(INCLUDE) -c $< $(LDFLAGS) -o $@
