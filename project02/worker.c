@@ -26,7 +26,6 @@ void * worker(void * args) {
 
 		// Get the next command to execute
 		Command * cmd = pop(cmdList);
-
 		// Unlock the command list
 		pthread_mutex_unlock(&(cmdList->lock));
 
@@ -38,6 +37,7 @@ void * worker(void * args) {
 				push(cmdList, cmd);
 				pthread_mutex_unlock(&(cmdList->lock));
 
+				// End the thread
 				return NULL;
 				break;
 			}
@@ -58,8 +58,6 @@ void * worker(void * args) {
 					// Invalid Account
 					sprintf(out, "%d INVALID ACCOUNT", cmd->id);
 				}
-				// Write to the file
-				writeToFile(outFile, out);
 				break;
 			}
 			case 2: {
@@ -72,25 +70,73 @@ void * worker(void * args) {
 
 				// Nicer way to access the account numbers
 				int accountIndices[numTransactions];
+				int transactionAmt[numTransactions];
 				int i;
+				int invalid = 0;
 				for (i = 0; i < numTransactions; i++) {
 					// Grab all the account numbers from the odd numbered arguments
 					accountIndices[i] = cmd->args[1 + 2 * i];
-					printf("PRE : %d: %d \n", i, accountIndices[i]);
+					if (accountIndices[i] > numAccounts
+							|| accountIndices[i] <= 0) {
+						// Invalid Account
+						sprintf(out, "%d INVALID ACCOUNT", cmd->id);
+						// Mark the invalid flag
+						invalid = 1;
+						// Stop the for loop
+						break;
+					}
+					transactionAmt[i] = cmd->args[2 + 2 * i];
 				}
-				sort(accountIndices, numTransactions);
-				for (i = 0; i < numTransactions; i++) {
-					printf("POST: %d: %d \n", i, accountIndices[i]);
+				if (checkDuplicates(accountIndices, numTransactions)) {
+					invalid = 1;
+					sprintf(out, "%d DUPLICATE ACCOUNT", cmd->id);
 				}
+				if (!invalid) {
+					// Sort the account indices and transactions so they are always locked/unlocked in the same order
+					parallelSort(accountIndices, transactionAmt,
+							numTransactions);
+
+					// Lock all accounts
+					for (i = 0; i < numTransactions; i++) {
+						pthread_mutex_lock(&(locks[accountIndices[i]]));
+					}
+					// Check valid balances
+					for (i = 0; i < numTransactions; i++) {
+						if (read_account(accountIndices[i])
+								+ transactionAmt[i] < 0) {
+							invalid = 1;
+							sprintf(out, "%d ISF %d", cmd->id,
+									accountIndices[i]);
+							break;
+						}
+					}
+					if (!invalid) {
+						for (i = 0; i < numTransactions; i++) {
+							int newBalance = read_account(accountIndices[i])
+									+ transactionAmt[i];
+							write_account(accountIndices[i], newBalance);
+						}
+						sprintf(out, "%d OK", cmd->id);
+					}
+					// Unlock all accounts
+					for (i = 0; i < numTransactions; i++) {
+						pthread_mutex_unlock(&(locks[accountIndices[i]]));
+					}
+				}
+
 			}
 
 		}
+
+		// Write to the file
+		writeToFile(outFile, out);
+
 		gettimeofday(&exectime, NULL);
 		sprintf(out, "\r\t\t\t\tTIME %ld.%06d %ld.%06d\n", cmd->time.tv_sec,
 				cmd->time.tv_usec, exectime.tv_sec, exectime.tv_usec);
 		writeToFile(outFile, out);
 
-		//free(cmd->args);
+		free(cmd->args);
 		free(cmd);
 	}
 

@@ -46,7 +46,7 @@ Command * pop(CommandList * cmdList) {
 	return cmd;
 }
 
-CommandList * listInit(){
+CommandList * listInit() {
 	CommandList * cmdList = (CommandList*) malloc(sizeof(CommandList));
 	cmdList->size = 0;
 	cmdList->head = cmdList->foot = NULL;
@@ -54,8 +54,11 @@ CommandList * listInit(){
 	return cmdList;
 }
 
-Command * commandInit(int id, int numArgs, char ** inputArgs){
+Command * commandInit(int id, int numArgs, char ** inputArgs) {
 	Command * cmd = (Command*) malloc(sizeof(Command));
+
+	cmd->next = NULL;
+	cmd->prev = NULL;
 
 	// Set the command ID
 	cmd->id = id;
@@ -64,7 +67,6 @@ Command * commandInit(int id, int numArgs, char ** inputArgs){
 	// Copy over all the arguments
 	cmd->numArgs = numArgs;
 	cmd->args = (int *) malloc(sizeof(int) * numArgs);
-	printf("Size of inputArgs %lu | cmd->args; %lu\n", sizeof((cmd->args)), sizeof(int) * numArgs);
 	//memset(&(cmd->args), '0', sizeof(int) * numArgs);
 	int j;
 	for (j = 1; j < numArgs; j++) {

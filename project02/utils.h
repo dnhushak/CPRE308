@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-
-void sort(int * array, int arrSize);
+int checkDuplicates(int * array, int arrSize);
+void parallelSort(int *, int *, int arrSize);
 int writeToFile(char * filename, char * content);
 
 #endif /* UTILS_H_ */

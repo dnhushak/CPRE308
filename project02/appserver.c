@@ -52,10 +52,10 @@ int main(int argc, char *argv[]) {
 	pthread_t worker_tid[numWorkers];
 	int thread_index[numWorkers];
 	int i;
-	/*for (i = 0; i < numWorkers; i++) {
-	 thread_index[i] = i;
-	 pthread_create(&worker_tid[i], NULL, worker, (void *) args);
-	 }*/
+	for (i = 0; i < numWorkers; i++) {
+		thread_index[i] = i;
+		pthread_create(&worker_tid[i], NULL, worker, (void *) args);
+	}
 
 	int id = 0;
 
@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
 		// TRANS - perform a transaction
 		else if (!(strcmp(inputArgs[0], "TRANS"))) {
 			cmd->args[0] = 2;
+			printf("Transaction\n");
 			// Check for more than 1 argument, and odd number of arguments
 			// (account and value pair, plus the initial argument
 			if (numArgs < 2 || numArgs % 2 == 0) {
@@ -121,6 +122,7 @@ int main(int argc, char *argv[]) {
 			// Reset ID
 			id--;
 			// Discard command
+			free(cmd->args);
 			free(cmd);
 			// Inform user of incorrect command
 			printf("< Invalid command, commands are: END, CHECK, TRANS\n");
@@ -145,9 +147,7 @@ int main(int argc, char *argv[]) {
 	for (i = 0; i < numWorkers; i++) {
 		pthread_join(worker_tid[i], NULL);
 	}
-
 	free(cmdList);
-	free(locks);
 	free(args);
 	exit(1);
 }
