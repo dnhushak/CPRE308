@@ -127,15 +127,17 @@ void * worker(void * args) {
 			}
 
 		}
-
+		pthread_mutex_lock(&(locks[numAccounts]));
 		// Write to the file
 		writeToFile(outFile, out);
 
 		gettimeofday(&exectime, NULL);
-		sprintf(out, "\r\t\t\t\tTIME %ld.%06d %ld.%06d\n", cmd->time.tv_sec,
+
+		sprintf(out, " TIME %ld.%06d %ld.%06d\n", cmd->time.tv_sec,
 				cmd->time.tv_usec, exectime.tv_sec, exectime.tv_usec);
 		writeToFile(outFile, out);
 
+		pthread_mutex_unlock(&(locks[numAccounts]));
 		free(cmd->args);
 		free(cmd);
 	}

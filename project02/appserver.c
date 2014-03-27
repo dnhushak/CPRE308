@@ -36,9 +36,10 @@ int main(int argc, char *argv[]) {
 		printf("< Initialization Error!");
 		exit(0);
 	}
-	pthread_mutex_t locks[numAccounts];
+	// The last lock will be used for file writing
+	pthread_mutex_t locks[numAccounts + 1];
 	int j;
-	for (j = 0; j < numAccounts; j++) {
+	for (j = 0; j < numAccounts + 1; j++) {
 		pthread_mutex_init(&(locks[j]), NULL);
 	}
 
@@ -108,7 +109,6 @@ int main(int argc, char *argv[]) {
 		// TRANS - perform a transaction
 		else if (!(strcmp(inputArgs[0], "TRANS"))) {
 			cmd->args[0] = 2;
-			printf("Transaction\n");
 			// Check for more than 1 argument, and odd number of arguments
 			// (account and value pair, plus the initial argument
 			if (numArgs < 2 || numArgs % 2 == 0) {
