@@ -1,3 +1,7 @@
+// To make, simply type "make" at a command prompt in this directory
+// Note that this make will also make the coarse-grained appserver in the coarse directory
+// and then move it to the top directory
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
