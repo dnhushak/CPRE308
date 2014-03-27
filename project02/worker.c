@@ -133,8 +133,8 @@ void * worker(void * args) {
 
 		gettimeofday(&exectime, NULL);
 
-		sprintf(out, " TIME %ld.%06d %ld.%06d\n", cmd->time.tv_sec,
-				cmd->time.tv_usec, exectime.tv_sec, exectime.tv_usec);
+		sprintf(out, " TIME %ld.%06d %ld.%06d\n",(int) cmd->time.tv_sec,
+				(int)cmd->time.tv_usec, (int)exectime.tv_sec,(int) exectime.tv_usec);
 		writeToFile(outFile, out);
 
 		pthread_mutex_unlock(&(locks[numAccounts]));
