@@ -29,6 +29,7 @@ void * worker(void * args) {
 		// Unlock the command list
 		pthread_mutex_unlock(&(cmdList->lock));
 
+		// Lock the bank
 		pthread_mutex_lock(&(locks[0]));
 		switch (cmd->args[0]) {
 			case 0: {

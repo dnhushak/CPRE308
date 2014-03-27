@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 		printf("< Initialization Error!");
 		exit(0);
 	}
-	// The last lock will be used for file writing
+	// The last lock will be used for file writing, hence + 1
 	pthread_mutex_t locks[numAccounts + 1];
 	int j;
 	for (j = 0; j < numAccounts + 1; j++) {

@@ -78,15 +78,17 @@ void * worker(void * args) {
 					accountIndices[i] = cmd->args[1 + 2 * i];
 					if (accountIndices[i] > numAccounts
 							|| accountIndices[i] <= 0) {
-						// Invalid Account
+						// Invalid Account number
 						sprintf(out, "%d INVALID ACCOUNT", cmd->id);
 						// Mark the invalid flag
 						invalid = 1;
 						// Stop the for loop
 						break;
 					}
+					// Grab all the transaction amounts too
 					transactionAmt[i] = cmd->args[2 + 2 * i];
 				}
+				// Check for duplicate account numbers (prevents a thread from deadlocking itself)
 				if (checkDuplicates(accountIndices, numTransactions)) {
 					invalid = 1;
 					sprintf(out, "%d DUPLICATE ACCOUNT", cmd->id);
@@ -105,12 +107,14 @@ void * worker(void * args) {
 						if (read_account(accountIndices[i])
 								+ transactionAmt[i] < 0) {
 							invalid = 1;
+							// Found invalid balance
 							sprintf(out, "%d ISF %d", cmd->id,
 									accountIndices[i]);
 							break;
 						}
 					}
 					if (!invalid) {
+						// Write all the new balances
 						for (i = 0; i < numTransactions; i++) {
 							int newBalance = read_account(accountIndices[i])
 									+ transactionAmt[i];
@@ -127,6 +131,7 @@ void * worker(void * args) {
 			}
 
 		}
+		// Lock the file
 		pthread_mutex_lock(&(locks[numAccounts]));
 		// Write to the file
 		writeToFile(outFile, out);
@@ -136,7 +141,7 @@ void * worker(void * args) {
 		sprintf(out, " TIME %ld.%06d %ld.%06d\n", cmd->time.tv_sec,
 				(int)cmd->time.tv_usec, exectime.tv_sec,(int) exectime.tv_usec);
 		writeToFile(outFile, out);
-
+		// Unlock the file
 		pthread_mutex_unlock(&(locks[numAccounts]));
 		free(cmd->args);
 		free(cmd);
