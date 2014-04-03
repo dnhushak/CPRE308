@@ -125,12 +125,12 @@ void first_come_first_served(struct process *proc) {
 			}
 			procCnt++;
 		}
-#ifdef DEBUG
 		else {
+#ifdef DEBUG
 			printf("\tNo process, current time is %d\n", time);
-		}
 #endif
 		time++;
+		}
 	}
 	avTime /= NUM_PROCESSES;
 	printf("Average time from arrival to finish is %d seconds\n", avTime);
@@ -242,12 +242,12 @@ void shortest_remaining_time(struct process *proc) {
 			}
 		}
 
-#ifdef DEBUG
 		else {
+#ifdef DEBUG
 			printf("\tNo process, current time is %d\n", time);
-		}
 #endif
 		time++;
+		}
 	}
 	avTime /= NUM_PROCESSES;
 	printf("Average time from arrival to finish is %d seconds\n", avTime);
@@ -321,12 +321,12 @@ void round_robin(struct process *proc) {
 			}
 		}
 
-#ifdef DEBUG
 		else {
+#ifdef DEBUG
 			printf("\tNo process, current time is %d\n", time);
-		}
 #endif
 		time++;
+		}
 	}
 	avTime /= NUM_PROCESSES;
 	printf("Average time from arrival to finish is %d seconds\n", avTime);
@@ -411,12 +411,12 @@ void round_robin_priority(struct process *proc) {
 			}
 		}
 
-#ifdef DEBUG
 		else {
+#ifdef DEBUG
 			printf("\tNo process, current time is %d\n", time);
-		}
 #endif
 		time++;
+		}
 	}
 	avTime /= NUM_PROCESSES;
 	printf("Average time from arrival to finish is %d seconds\n", avTime);
