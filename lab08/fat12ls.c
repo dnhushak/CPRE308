@@ -169,15 +169,15 @@ void parseDirectory(int iDirOff, int iEntries, unsigned char buffer[]) {
 	for (i = 0; i < (iEntries); i = i + 32) {
 		if (1) {
 			// Display filename
-			printf("%s\t", toDOSName(string, buffer, 0x00*i));
+			printf("%s\t", toDOSName(string, buffer, 0x00 + i));
 			// Display Attributes
-			printf("%s\t", parseAttributes(string, 0x0b*i));
+			printf("%s\t", parseAttributes(string, buffer[0x0b + i]));
 			// Display Time
-			printf("%s\t", parseTime(string, 0x16*i));
+			printf("%s: %d\t", parseTime(string, buffer[0x16 + i]), buffer[0x16 + i]);
 			// Display Date
-			printf("%s\t", parseDate(string, 0x18*i));
+			printf("%s\t", parseDate(string, buffer[0x18 + i]));
 			// Display Size
-			printf("%d\n", 0x1c);
+			printf("%d\n", buffer[0x1c + i]);
 		}
 	}
 
@@ -188,19 +188,19 @@ void parseDirectory(int iDirOff, int iEntries, unsigned char buffer[]) {
 // Parses the attributes bits of a file
 char * parseAttributes(char string[], unsigned char key) {
 	int i = 0;
-	if (key &= 0b1) {
+	if (key & 0b1) {
 		string[i] = 'R';
 		i++;
 	}
-	if (key &= 0b10) {
+	if (key & 0b10) {
 		string[i] = 'H';
 		i++;
 	}
-	if (key &= 0b100) {
+	if (key & 0b100) {
 		string[i] = 'S';
 		i++;
 	}
-	if (key &= 0b100000) {
+	if (key & 0b100000) {
 		string[i] = 'A';
 		i++;
 	}
@@ -212,8 +212,7 @@ char * parseAttributes(char string[], unsigned char key) {
 // Decodes the bits assigned to the time of each file
 char * parseTime(char string[], unsigned short usTime) {
 	unsigned char hour = 0x00, min = 0x00, sec = 0x00;
-
-	//printf("time: %x", usTime);
+//	printf("time: %x", usTime);
 	// Grab the uppermost 5 bits
 	hour = usTime >> 11;
 
@@ -263,11 +262,11 @@ char * parseDate(char string[], unsigned short usDate) {
 char * toDOSName(char string[], unsigned char buffer[], int offset) {
 	int i;
 	for (i = 0; i < 8; i++) {
-		string[i] = buffer[i];
+		string[i] = buffer[i + offset];
 	}
 	string[8] = '.';
 	for (i = 8; i < 11; i++) {
-		string[i + 1] = buffer[i];
+		string[i + 1] = buffer[i + offset];
 	}
 	return string;
 } // end toDosNameRead-Only Bit
